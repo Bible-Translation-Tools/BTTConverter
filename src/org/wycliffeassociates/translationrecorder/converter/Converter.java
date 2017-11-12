@@ -1,10 +1,14 @@
 package org.wycliffeassociates.translationrecorder.converter;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
 import org.wycliffeassociates.translationrecorder.wav.WavFile;
 import wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
@@ -12,20 +16,26 @@ import wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 public class Converter {
 
-    public static void main(String[] args) {
+    public static String main(String[] args) {
         String rootFolder = ".";
         String trFolder = "TranslationRecorder";
         String trArchiveFolder = "TranslationRecorderArchive";
         File tr = null;
         File tra = null;
+        File datetime = null;
 
         if(args.length > 0)
         {
             rootFolder = args[0];
         }
 
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        Date date = new Date();
+        String dt = dateFormat.format(date);
+
         tr = new File(rootFolder + File.separator + trFolder);
         tra = new File(rootFolder + File.separator + trArchiveFolder);
+        datetime = new File(tra + File.separator + dt);
 
         // Create Archive folder if needed
         if(!tra.exists())
@@ -33,15 +43,39 @@ public class Converter {
             tra.mkdir();
         }
 
+        // Create DateTime folder
+        if(!datetime.exists())
+        {
+            datetime.mkdir();
+        }
+
+        if(!datetime.exists())
+        {
+            return "Could not create archive folders!";
+        }
+
+        if(!tr.exists())
+        {
+            return "TranslationRecorder folder does not exist!";
+        }
+
         File[] projects = tr.listFiles();
 
         // Copy project folder to Archive folder
         for(File project: projects) {
             try{
-                FileUtils.copyDirectoryToDirectory(project, tra);
+                if(project.isDirectory())
+                {
+                    FileUtils.copyDirectoryToDirectory(project, datetime);
+                }
+                else
+                {
+                    FileUtils.copyFileToDirectory(project, datetime);
+                }
+
             } catch(Exception e) {
                 System.out.println(e.getMessage());
-                System.exit(0);
+                return  "Exception: " + e.getMessage();
             }
         }
 
@@ -54,18 +88,24 @@ public class Converter {
             }
         }*/
 
+        int counter = 0;
+
         // Iterate through projects
         File[] langs = tr.listFiles();
         for(File lang: langs) {
+            if(!lang.isDirectory()) continue;
             File[] versions = lang.listFiles();
             for(File version: versions)
             {
+                if(!version.isDirectory()) continue;
                 File[] books = version.listFiles();
                 for(File book: books)
                 {
+                    if(!book.isDirectory()) continue;
                     File[] chapters = book.listFiles();
                     for(File chapter: chapters)
                     {
+                        if(!chapter.isDirectory()) continue;
                         File[] takes = chapter.listFiles();
 
                         String mode = DetectMode(takes);
@@ -74,6 +114,9 @@ public class Converter {
                         {
                             if(take.isDirectory()) continue;
                             if(take.getName().equals("chapter.wav")) continue;
+                            String ext = FilenameUtils.getExtension(take.getName());
+
+                            if(!ext.equals("wav")) continue;
 
                             WavFile wf = new WavFile(take);
                             WavMetadata wmd = wf.getMetadata();
@@ -101,6 +144,8 @@ public class Converter {
                                     File newFile = new File(newName);
                                     take.renameTo(newFile);
                                 }
+
+                                counter++;
                             }
 
                             System.out.println(take.getName());
@@ -109,6 +154,8 @@ public class Converter {
                 }
             }
         }
+
+        return "Conversion complete: " + counter + " files have been affected.";
     }
 
 
