@@ -1,5 +1,8 @@
 package org.wycliffeassociates.translationrecorder.wav;
 
+//import android.os.Parcel;
+//import android.os.Parcelable;
+
 //import com.door43.tools.reporting.Logger;
 
 import org.json.JSONException;
@@ -28,28 +31,20 @@ public class WavMetadata {
 
     private final int SIZE_OF_LABEL = 4;
 
-    String mAnthology = "";
     String mLanguage = "";
+    String mResource = "";
+    String mAnthology = "";
     String mVersion = "";
-    String mSlug = "";
     String mBookNumber = "";
+    String mBook = "";
     String mMode = "";
     String mChapter = "";
     String mStartVerse = "";
     String mEndVerse = "";
-    HashMap<Integer, WavCue> mCuePoints = new HashMap<>();
+    String mSourceLanguage = "";
+    String mContributor = "";
 
-//    public WavMetadata(Project p, String chapter, String startVerse, String endVerse) {
-//        mAnthology = p.getAnthologySlug();
-//        mLanguage = p.getTargetLanguageSlug();
-//        mVersion = p.getVersionSlug();
-//        mSlug = p.getBookSlug();
-//        mBookNumber = p.getBookNumber();
-//        mMode = p.getModeSlug().toLowerCase();
-//        mChapter = chapter;
-//        mStartVerse = startVerse;
-//        mEndVerse = endVerse;
-//    }
+    HashMap<Integer, WavCue> mCuePoints = new HashMap<>();
 
     public WavMetadata(File file) {
         parseMetadata(file);
@@ -58,22 +53,28 @@ public class WavMetadata {
     public String getAnthology(){return mAnthology;}
     public String getLanguage(){return mLanguage;}
     public String getVersion(){return mVersion;}
-    public String getSlug(){return mSlug;}
+    public String getSlug(){return mBook;}
     public String getBookNumber(){return mBookNumber;}
     public String getModeSlug(){return mMode;}
     public String getChapter(){return mChapter;}
     public String getStartVerse(){return mStartVerse;}
     public String getEndVerse(){return mEndVerse;}
+    public String getContributor() {
+        return mContributor;
+    }
 
     public void setAnthology(String value){mAnthology = value;}
     public void setLanguage(String value){mLanguage = value;}
     public void setVersion(String value){mVersion = value;}
-    public void setSlug(String value){mSlug = value;}
+    public void setSlug(String value){mBook = value;}
     public void setBookNumber(String value){mBookNumber = value;}
     public void setModeSlug(String value){mMode = value;}
     public void setChapter(String value){mChapter = value;}
     public void setStartVerse(String value){mStartVerse = value;}
     public void setEndVerse(String value){mEndVerse = value;}
+    public void setContributor(String value) {
+        mContributor = value;
+    }
 
     private String readLabel(ByteBuffer buffer) {
         if (buffer.remaining() >= SIZE_OF_LABEL) {
@@ -258,7 +259,7 @@ public class WavMetadata {
             JSONObject json = new JSONObject(metadata);
             parseMetadataFromJson(json);
         } catch (JSONException e) {
-//            Logger.e(this.toString(), "Tried to parse TR metadata and threw JSONException.", e);
+            //Logger.e(this.toString(), "Tried to parse TR metadata and threw JSONException.", e);
             return;
         }
     }
@@ -284,9 +285,9 @@ public class WavMetadata {
             if (json.has("version")) {
                 mVersion = json.getString("version");
             }
-            mSlug = "";
-            if (json.has("slug")) {
-                mSlug = json.getString("slug");
+            mBook = "";
+            if (json.has("book")) {
+                mBook = json.getString("book");
             }
             mBookNumber = "";
             if (json.has("book_number")) {
@@ -308,6 +309,10 @@ public class WavMetadata {
             if (json.has("endv")) {
                 mEndVerse = json.getString("endv");
             }
+            mContributor = "";
+            if (json.has("contributor")) {
+                mContributor = json.getString("contributor");
+            }
             if (json.has("markers")) {
                 JSONObject markers = json.getJSONObject("markers");
                 parseMarkers(markers);
@@ -321,7 +326,6 @@ public class WavMetadata {
             Iterator<String> keys = markers.keys();
             while (keys.hasNext()) {
                 String s = keys.next();
-
                 int position = markers.getInt(s);
                 WavCue cue = new WavCue(s, position);
                 addCue(cue);
@@ -341,12 +345,13 @@ public class WavMetadata {
             json.put("anthology", mAnthology);
             json.put("language", mLanguage);
             json.put("version", mVersion);
-            json.put("slug", mSlug);
+            json.put("book", mBook);
             json.put("book_number", mBookNumber);
             json.put("mode", mMode);
             json.put("chapter", mChapter);
             json.put("startv", mStartVerse);
             json.put("endv", mEndVerse);
+            json.put("contributor", mContributor);
             json.put("markers", getMarkerJsonObject());
             return json;
         } catch (JSONException e) {
@@ -493,6 +498,6 @@ public class WavMetadata {
             newKey = Math.max(newKey, i);
         }
         newKey++;
-        mCuePoints.put(newKey, cue);
+        mCuePoints.put(Integer.parseInt(cue.getLabel()), cue);
     }
 }

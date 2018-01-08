@@ -16,7 +16,12 @@ import wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 public class Converter {
 
-    public static String main(String[] args) {
+    public static void main(String[] args) {
+        Convert(args);
+    }
+
+    public static String Convert(String[] args)
+    {
         String rootFolder = ".";
         String trFolder = "TranslationRecorder";
         String trArchiveFolder = "TranslationRecorderArchive";
@@ -51,11 +56,13 @@ public class Converter {
 
         if(!datetime.exists())
         {
+            System.out.println("Could not create archive folders!");
             return "Could not create archive folders!";
         }
 
         if(!tr.exists())
         {
+            System.out.println("TranslationRecorder folder does not exist!");
             return "TranslationRecorder folder does not exist!";
         }
 
@@ -74,8 +81,8 @@ public class Converter {
                 }
 
             } catch(Exception e) {
-                System.out.println(e.getMessage());
-                return  "Exception: " + e.getMessage();
+                System.out.println("Exception: " + e.getMessage());
+                return "Exception: " + e.getMessage();
             }
         }
 
@@ -132,14 +139,14 @@ public class Converter {
                                 {
                                     String newName = take.getParent() + File.separator;
                                     newName += wmd.getLanguage()
-                                        + "_" + wmd.getVersion()
-                                        + "_b" + wmd.getBookNumber()
-                                        + "_" + wmd.getSlug()
-                                        + "_c" + wmd.getChapter()
-                                        + "_v" + wmd.getStartVerse()
-                                        + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
-                                        + "_t" + String.format("%02d", fne.getTake())
-                                        + ".wav";
+                                            + "_" + wmd.getVersion()
+                                            + "_b" + wmd.getBookNumber()
+                                            + "_" + wmd.getSlug()
+                                            + "_c" + wmd.getChapter()
+                                            + "_v" + wmd.getStartVerse()
+                                            + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
+                                            + "_t" + String.format("%02d", fne.getTake())
+                                            + ".wav";
 
                                     File newFile = new File(newName);
                                     take.renameTo(newFile);
@@ -155,6 +162,7 @@ public class Converter {
             }
         }
 
+        System.out.println("Conversion complete: " + counter + " files have been affected.");
         return "Conversion complete: " + counter + " files have been affected.";
     }
 
