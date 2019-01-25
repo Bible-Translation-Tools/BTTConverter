@@ -1,7 +1,7 @@
 package org.wycliffeassociates.translationrecorder.wav;
 
 import org.json.JSONException;
-//import wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
+//import FileNameExtractor;
 //import org.wycliffeassociates.translationrecorder.ProjectManager.Project;
 //import org.wycliffeassociates.translationrecorder.Reporting.Logger;
 

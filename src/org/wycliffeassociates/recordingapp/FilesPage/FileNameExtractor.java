@@ -1,4 +1,4 @@
-package wycliffeassociates.recordingapp.FilesPage;
+package org.wycliffeassociates.recordingapp.FilesPage;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -81,16 +81,6 @@ public class FileNameExtractor {
 //        this(project.getTargetLanguage(), project.getSource(), project.getBookNumber(), project.getSlug(), project.getProject(), chapterIntToString(project, chapter), unitIntToString(startVerse),
 //                unitIntToString(endVerse), "00");
 //    }
-
-    public static String chapterIntToString(String slug, int chapter){
-        String result;
-        if(slug.compareTo("psa") == 0){
-            result = String.format("%03d", chapter);
-        } else {
-            result = String.format("%02d", chapter);
-        }
-        return result;
-    }
 
     public static String unitIntToString(int unit){
         return String.format("%02d", unit);

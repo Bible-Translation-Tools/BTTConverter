@@ -1,4 +1,4 @@
-package org.wycliffeassociates.translationrecorder.converter;
+package org.wycliffeassociates.trConverter;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -11,7 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
 import org.wycliffeassociates.translationrecorder.wav.WavFile;
-import wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
+import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 
 public class Converter {
@@ -25,9 +25,9 @@ public class Converter {
         String rootFolder = ".";
         String trFolder = "TranslationRecorder";
         String trArchiveFolder = "TranslationRecorderArchive";
-        File tr = null;
-        File tra = null;
-        File datetime = null;
+        File tr;
+        File tra;
+        File datetime;
 
         if(args.length > 0)
         {
@@ -196,13 +196,13 @@ public class Converter {
                 bn = bp.GetBookNumber(fne.getBook());
             }
 
-            String bnStr = FileNameExtractor.chapterIntToString(fne.getBook(), bn);
+            String bnStr = FileNameExtractor.unitIntToString(bn);
             wmd.setBookNumber(bnStr);
         }
         if(wmd.getChapter().isEmpty())
         {
             int cn = fne.getChapter();
-            String cnStr = FileNameExtractor.chapterIntToString(fne.getBook(), cn);
+            String cnStr = FileNameExtractor.unitIntToString(cn);
             wmd.setChapter(cnStr);
         }
         if(wmd.getModeSlug().isEmpty())
@@ -225,7 +225,7 @@ public class Converter {
                     String ant  = bp.GetAnthology(fne.getBook());
                     String path = "assets/chunks/" + ant + "/" + fne.getBook() + "/chunks.json";
 
-                    String cnStr = FileNameExtractor.chapterIntToString(fne.getBook(), fne.getChapter());
+                    String cnStr = FileNameExtractor.unitIntToString(fne.getChapter());
                     String svStr = FileNameExtractor.unitIntToString(fne.getStartVerse());
                     String id = cnStr + "-" + svStr;
 

@@ -1,4 +1,4 @@
-package org.wycliffeassociates.translationrecorder.converter;
+package org.wycliffeassociates.trConverter;
 
 
 import org.json.JSONArray;
