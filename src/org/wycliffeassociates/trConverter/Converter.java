@@ -3,12 +3,11 @@ package org.wycliffeassociates.trConverter;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+
 import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
 import org.wycliffeassociates.translationrecorder.wav.WavFile;
 import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
@@ -16,22 +15,26 @@ import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 public class Converter {
 
-    public static void main(String[] args) {
-        Convert(args);
-    }
+    private List<Mode> modes = new ArrayList<>();
 
-    public static String Convert(String[] args)
-    {
-        String rootFolder = ".";
-        String trFolder = "TranslationRecorder";
-        String trArchiveFolder = "TranslationRecorderArchive";
-        File tr;
-        File tra;
-        File datetime;
+    private Scanner reader = new Scanner(System.in);
+    private String rootFolder = ".";
+    private String trFolder = "TranslationRecorder";
+    private String trArchiveFolder = "TranslationRecorderArchive";
+    private File tr;
+    private File tra;
+    private File datetime;
+    boolean isCli = true;
 
+    public Converter(String[] args) throws Exception {
         if(args.length > 0)
         {
             rootFolder = args[0];
+        }
+
+        if(args.length > 1)
+        {
+            isCli = args[1] == "c";
         }
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
@@ -54,49 +57,34 @@ public class Converter {
             datetime.mkdir();
         }
 
-        if(!datetime.exists())
-        {
-            System.out.println("Could not create archive folders!");
-            return "Could not create archive folders!";
-        }
-
-        if(!tr.exists())
-        {
-            System.out.println("TranslationRecorder folder does not exist!");
-            return "TranslationRecorder folder does not exist!";
-        }
-
         File[] projects = tr.listFiles();
 
         // Copy project folder to Archive folder
         for(File project: projects) {
-            try{
-                if(project.isDirectory())
-                {
-                    FileUtils.copyDirectoryToDirectory(project, datetime);
-                }
-                else
-                {
-                    FileUtils.copyFileToDirectory(project, datetime);
-                }
-
-            } catch(Exception e) {
-                System.out.println("Exception: " + e.getMessage());
-                return "Exception: " + e.getMessage();
+            if(project.isDirectory())
+            {
+                FileUtils.copyDirectoryToDirectory(project, datetime);
+            }
+            else
+            {
+                FileUtils.copyFileToDirectory(project, datetime);
             }
         }
+    }
 
-        // If copy operation is successfull, delete projects from tr folder
-        /*for(File project: projects) {
-            try{
-                FileUtils.deleteDirectory(project);
-            } catch(Exception e) {
-                System.out.println(e.getMessage());
-            }
-        }*/
+    public static void main(String[] args) {
+        try {
+            Converter converter = new Converter(args);
+            converter.analize();
+            converter.getModeFromUser();
+            converter.convert();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
-        int counter = 0;
-
+    public void analize()
+    {
         // Iterate through projects
         File[] langs = tr.listFiles();
         for(File lang: langs) {
@@ -115,16 +103,74 @@ public class Converter {
                         if(!chapter.isDirectory()) continue;
                         File[] takes = chapter.listFiles();
 
-                        String mode = DetectMode(takes);
+                        takes = Arrays.stream(takes)
+                                .filter(s ->
+                                        (FilenameUtils.getExtension(s.getName()).equals("wav") ||
+                                                FilenameUtils.getExtension(s.getName()).equals("WAV")) &&
+                                                !s.getName().equals("chapter.wav"))
+                                .toArray(File[]::new);
+
+                        if (takes.length <= 0) continue;
+
+                        if (getMode(book.getPath()) == null) {
+                            String projectName = String.format("%s | %s | %s",
+                                    lang.getName(), version.getName(), book.getName());
+                            modes.add(new Mode(DetectMode(takes), projectName, book.getPath()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void getModeFromUser() {
+        for(Mode m: modes) {
+            while (m.mode.isEmpty()) {
+                System.out.println("Select mode for \"" + m.projectName + "\" (1 - verse, 2 - chunk): ");
+                int input = reader.nextInt();
+                m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+            }
+        }
+
+        reader.close();
+    }
+
+    public String convert()
+    {
+        int counter = 0;
+
+        // Iterate through projects
+        File[] langs = tr.listFiles();
+        for(File lang: langs) {
+            if(!lang.isDirectory()) continue;
+            File[] versions = lang.listFiles();
+            for(File version: versions)
+            {
+                if(!version.isDirectory()) continue;
+                File[] books = version.listFiles();
+                for(File book: books)
+                {
+                    if(!book.isDirectory()) continue;
+
+                    String mode = getMode(book.getPath()).mode;
+
+                    File[] chapters = book.listFiles();
+                    for(File chapter: chapters)
+                    {
+                        if(!chapter.isDirectory()) continue;
+                        File[] takes = chapter.listFiles();
+
+                        takes = Arrays.stream(takes)
+                                .filter(s ->
+                                        (FilenameUtils.getExtension(s.getName()).equals("wav") ||
+                                        FilenameUtils.getExtension(s.getName()).equals("WAV")) &&
+                                        !s.getName().equals("chapter.wav"))
+                                .toArray(File[]::new);
+
+                        if (takes.length <= 0) continue;
 
                         for(File take: takes)
                         {
-                            if(take.isDirectory()) continue;
-                            if(take.getName().equals("chapter.wav")) continue;
-                            String ext = FilenameUtils.getExtension(take.getName());
-
-                            if(!ext.equals("wav")) continue;
-
                             WavFile wf = new WavFile(take);
                             WavMetadata wmd = wf.getMetadata();
                             FileNameExtractor fne = new FileNameExtractor(take);
@@ -166,8 +212,7 @@ public class Converter {
         return "Conversion complete: " + counter + " files have been affected.";
     }
 
-
-    private static void UpdateMetadata(WavMetadata wmd, FileNameExtractor fne, String mode)
+    private void UpdateMetadata(WavMetadata wmd, FileNameExtractor fne, String mode)
     {
         BookParser bp = new BookParser();
 
@@ -243,10 +288,10 @@ public class Converter {
         }
     }
 
-    private static String DetectMode(File[] files)
+    private String DetectMode(File[] files)
     {
-        String mode = "verse";
-        ArrayList<Integer> verses = new ArrayList<Integer>();
+        String mode = "";
+        ArrayList<Integer> verses = new ArrayList<>();
 
         for(File file: files)
         {
@@ -263,10 +308,10 @@ public class Converter {
                 return mode;
             }
 
-            verses.add(fne.getStartVerse());
+            //verses.add(fne.getStartVerse());
         }
 
-        Collections.sort(verses);
+        /*Collections.sort(verses);
 
         int lastVerse = 0;
         for(int verse: verses)
@@ -276,8 +321,24 @@ public class Converter {
                 return "chunk";
             }
             lastVerse = verse;
-        }
+        }*/
 
         return mode;
+    }
+
+    private Mode getMode(String bookPath) {
+        for (Mode m: modes) {
+            if (m.bookPath.equals(bookPath)) return m;
+        }
+
+        return null;
+    }
+
+    public List<Mode> getModes() {
+        return this.modes;
+    }
+
+    public void setModes(List<Mode> modes) {
+        this.modes = modes;
     }
 }
