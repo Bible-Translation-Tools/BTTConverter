@@ -15,7 +15,7 @@ import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 public class Converter {
 
-    private List<Mode> modes = new ArrayList<Mode>();
+    private List<Mode> modes = new ArrayList<>();
 
     private Scanner reader = new Scanner(System.in);
     private String rootFolder = ".";
@@ -57,17 +57,20 @@ public class Converter {
             datetime.mkdir();
         }
 
-        File[] projects = tr.listFiles();
+        if(tr.exists())
+        {
+            File[] projects = tr.listFiles();
 
-        // Copy project folder to Archive folder
-        for(File project: projects) {
-            if(project.isDirectory())
-            {
-                FileUtils.copyDirectoryToDirectory(project, datetime);
-            }
-            else
-            {
-                FileUtils.copyFileToDirectory(project, datetime);
+            // Copy project folder to Archive folder
+            for(File project: projects) {
+                if(project.isDirectory())
+                {
+                    FileUtils.copyDirectoryToDirectory(project, datetime);
+                }
+                else
+                {
+                    FileUtils.copyFileToDirectory(project, datetime);
+                }
             }
         }
     }
@@ -85,6 +88,8 @@ public class Converter {
 
     public void analize()
     {
+        if(!tr.exists()) return;
+
         // Iterate through projects
         File[] langs = tr.listFiles();
         for(File lang: langs) {
