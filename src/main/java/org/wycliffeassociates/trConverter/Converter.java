@@ -1,6 +1,7 @@
 package org.wycliffeassociates.trConverter;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -24,7 +25,8 @@ public class Converter {
     private File tr;
     private File tra;
     private File datetime;
-    boolean isCli = true;
+    private boolean backupCreated;
+    private boolean isCli = true;
 
     public Converter(String[] args) throws Exception {
         if(args.length > 0)
@@ -44,35 +46,6 @@ public class Converter {
         tr = new File(rootFolder + File.separator + trFolder);
         tra = new File(rootFolder + File.separator + trArchiveFolder);
         datetime = new File(tra + File.separator + dt);
-
-        // Create Archive folder if needed
-        if(!tra.exists())
-        {
-            tra.mkdir();
-        }
-
-        // Create DateTime folder
-        if(!datetime.exists())
-        {
-            datetime.mkdir();
-        }
-
-        if(tr.exists())
-        {
-            File[] projects = tr.listFiles();
-
-            // Copy project folder to Archive folder
-            for(File project: projects) {
-                if(project.isDirectory())
-                {
-                    FileUtils.copyDirectoryToDirectory(project, datetime);
-                }
-                else
-                {
-                    FileUtils.copyFileToDirectory(project, datetime);
-                }
-            }
-        }
     }
 
     public static void main(String[] args) {
@@ -122,7 +95,7 @@ public class Converter {
                         if (getMode(book.getPath()) == null) {
                             String projectName = String.format("%s | %s | %s",
                                     lang.getName(), version.getName(), book.getName());
-                            modes.add(new Mode(DetectMode(takes), projectName, book.getPath()));
+                            modes.add(new Mode(detectMode(takes), projectName, book.getPath()));
                         }
                     }
                 }
@@ -130,20 +103,12 @@ public class Converter {
         }
     }
 
-    private void getModeFromUser() {
-        for(Mode m: modes) {
-            while (m.mode.isEmpty()) {
-                System.out.println("Select mode for \"" + m.projectName + "\" (1 - verse, 2 - chunk): ");
-                int input = reader.nextInt();
-                m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
-            }
-        }
-
-        reader.close();
-    }
-
     public String convert()
     {
+        createBackup();
+
+        if(!backupCreated) return "There was an error while creating backup";
+
         int counter = 0;
 
         // Iterate through projects
@@ -186,7 +151,7 @@ public class Converter {
 
                             if(fne.matched())
                             {
-                                UpdateMetadata(wmd, fne, mode);
+                                updateMetadata(wmd, fne, mode);
                                 wf.commit();
 
                                 // Rename file if it was created prior to ver.8.5
@@ -221,7 +186,57 @@ public class Converter {
         return "Conversion complete: " + counter + " files have been affected.";
     }
 
-    private void UpdateMetadata(WavMetadata wmd, FileNameExtractor fne, String mode)
+    private void getModeFromUser() {
+        for(Mode m: modes) {
+            while (m.mode.isEmpty()) {
+                System.out.println("Select mode for \"" + m.projectName + "\" (1 - verse, 2 - chunk): ");
+                int input = reader.nextInt();
+                m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+            }
+        }
+
+        reader.close();
+    }
+
+    private void createBackup() {
+        backupCreated = false;
+
+        // Create Archive folder if needed
+        if(!tra.exists())
+        {
+            tra.mkdir();
+        }
+
+        // Create DateTime folder
+        if(!datetime.exists())
+        {
+            datetime.mkdir();
+        }
+
+        if(tr.exists())
+        {
+            File[] projects = tr.listFiles();
+
+            // Copy project folder to Archive folder
+            try {
+                for(File project: projects) {
+                    if(project.isDirectory())
+                    {
+                        FileUtils.copyDirectoryToDirectory(project, datetime);
+                    }
+                    else
+                    {
+                        FileUtils.copyFileToDirectory(project, datetime);
+                    }
+                    backupCreated = true;
+                }
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private void updateMetadata(WavMetadata wmd, FileNameExtractor fne, String mode)
     {
         BookParser bp = new BookParser();
 
@@ -298,7 +313,7 @@ public class Converter {
         }
     }
 
-    private String DetectMode(File[] files)
+    private String detectMode(File[] files)
     {
         String mode = "";
 
