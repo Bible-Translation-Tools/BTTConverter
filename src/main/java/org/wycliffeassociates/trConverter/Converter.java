@@ -55,7 +55,7 @@ public class Converter {
             converter.getModeFromUser();
             converter.convert();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -123,6 +123,9 @@ public class Converter {
                 for(File book: books)
                 {
                     if(!book.isDirectory()) continue;
+
+                    Mode bookMode = getMode(book.getPath());
+                    if(bookMode == null) continue;
 
                     String mode = getMode(book.getPath()).mode;
 
@@ -231,7 +234,7 @@ public class Converter {
                     backupCreated = true;
                 }
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
     }
