@@ -63,124 +63,88 @@ public class Converter {
     {
         if(!tr.exists()) return;
 
-        // Iterate through projects
-        File[] langs = tr.listFiles();
-        for(File lang: langs) {
-            if(!lang.isDirectory()) continue;
-            File[] versions = lang.listFiles();
-            for(File version: versions)
-            {
-                if(!version.isDirectory()) continue;
-                File[] books = version.listFiles();
-                for(File book: books)
-                {
-                    if(!book.isDirectory()) continue;
-                    File[] chapters = book.listFiles();
-                    for(File chapter: chapters)
-                    {
-                        if(!chapter.isDirectory()) continue;
-                        File[] takes = chapter.listFiles();
-                        List<File> filteredTakes = new ArrayList<File>();
+        Collection<File> takes = FileUtils.listFiles(tr, null, true);
+        for (File take: takes) {
+            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
+                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
+                    !take.getName().equals("chapter.wav")) {
 
-                        for (File take: takes) {
-                            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
-                                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
-                            !take.getName().equals("chapter.wav")) {
-                                filteredTakes.add(take);
-                            }
-                        }
+                String[] parts = take.getName().split("_");
+                String lang = parts.length > 0 ? parts[0] : "";
+                String version = parts.length > 1 ? parts[1] : "";
+                String book = parts.length > 3 ? parts[3] : "";
+                String chapter = parts.length > 4 ? parts[4] : "";
 
-                        if (filteredTakes.size() <= 0) continue;
+                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty() && !chapter.isEmpty()) {
+                    String projectName = String.format("%s | %s | %s",
+                            lang, version, book);
 
-                        if (getMode(book.getPath()) == null) {
-                            String projectName = String.format("%s | %s | %s",
-                                    lang.getName(), version.getName(), book.getName());
-                            modes.add(new Mode(detectMode(takes), projectName, book.getPath()));
-                        }
+                    if (getMode(projectName) == null) {
+                        modes.add(new Mode(detectMode(take), projectName));
                     }
                 }
             }
         }
     }
 
-    public String convert()
-    {
+    public String convert() {
         createBackup();
 
         if(!backupCreated) return "There was an error while creating backup";
 
         int counter = 0;
 
-        // Iterate through projects
-        File[] langs = tr.listFiles();
-        for(File lang: langs) {
-            if(!lang.isDirectory()) continue;
-            File[] versions = lang.listFiles();
-            for(File version: versions)
-            {
-                if(!version.isDirectory()) continue;
-                File[] books = version.listFiles();
-                for(File book: books)
-                {
-                    if(!book.isDirectory()) continue;
+        Collection<File> takes = FileUtils.listFiles(tr, null, true);
+        for (File take: takes) {
+            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
+                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
+                    !take.getName().equals("chapter.wav")) {
 
-                    Mode bookMode = getMode(book.getPath());
+                String[] parts = take.getName().split("_");
+                String lang = parts.length > 0 ? parts[0] : "";
+                String version = parts.length > 1 ? parts[1] : "";
+                String book = parts.length > 3 ? parts[3] : "";
+
+                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
+                    String projectName = String.format("%s | %s | %s",
+                            lang, version, book);
+
+                    Mode bookMode = getMode(projectName);
                     if(bookMode == null) continue;
 
-                    String mode = getMode(book.getPath()).mode;
+                    String mode = bookMode.mode;
 
-                    File[] chapters = book.listFiles();
-                    for(File chapter: chapters)
+                    WavFile wf = new WavFile(take);
+                    WavMetadata wmd = wf.getMetadata();
+                    FileNameExtractor fne = new FileNameExtractor(take);
+
+                    if(fne.matched())
                     {
-                        if(!chapter.isDirectory()) continue;
-                        File[] takes = chapter.listFiles();
-                        List<File> filteredTakes = new ArrayList<File>();
+                        updateMetadata(wmd, fne, mode);
+                        wf.commit();
 
-                        for (File take: takes) {
-                            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
-                                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
-                                    !take.getName().equals("chapter.wav")) {
-                                filteredTakes.add(take);
-                            }
-                        }
-
-                        if (filteredTakes.size() <= 0) continue;
-
-                        for(File take: filteredTakes)
+                        // Rename file if it was created prior to ver.8.5
+                        if(fne.version84())
                         {
-                            WavFile wf = new WavFile(take);
-                            WavMetadata wmd = wf.getMetadata();
-                            FileNameExtractor fne = new FileNameExtractor(take);
+                            String newName = take.getParent() + File.separator;
+                            newName += wmd.getLanguage()
+                                    + "_" + wmd.getVersion()
+                                    + "_b" + wmd.getBookNumber()
+                                    + "_" + wmd.getSlug()
+                                    + "_c" + wmd.getChapter()
+                                    + "_v" + wmd.getStartVerse()
+                                    + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
+                                    + "_t" + String.format("%02d", fne.getTake())
+                                    + ".wav";
 
-                            if(fne.matched())
-                            {
-                                updateMetadata(wmd, fne, mode);
-                                wf.commit();
-
-                                // Rename file if it was created prior to ver.8.5
-                                if(fne.version84())
-                                {
-                                    String newName = take.getParent() + File.separator;
-                                    newName += wmd.getLanguage()
-                                            + "_" + wmd.getVersion()
-                                            + "_b" + wmd.getBookNumber()
-                                            + "_" + wmd.getSlug()
-                                            + "_c" + wmd.getChapter()
-                                            + "_v" + wmd.getStartVerse()
-                                            + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
-                                            + "_t" + String.format("%02d", fne.getTake())
-                                            + ".wav";
-
-                                    File newFile = new File(newName);
-                                    take.renameTo(newFile);
-                                }
-
-                                counter++;
-                            }
-
-                            System.out.println(take.getName());
+                            File newFile = new File(newName);
+                            take.renameTo(newFile);
                         }
+
+                        counter++;
                     }
+
+                    System.out.println(take.getName());
                 }
             }
         }
@@ -316,15 +280,11 @@ public class Converter {
         }
     }
 
-    private String detectMode(File[] files)
+    private String detectMode(File file)
     {
         String mode = "";
 
-        for(File file: files)
-        {
-            if(file.isDirectory()) continue;
-            if(file.getName().equals("chapter.wav")) continue;
-
+        if(!file.isDirectory() && !file.getName().equals("chapter.wav")) {
             WavFile wf = new WavFile(file);
             WavMetadata wmd = wf.getMetadata();
 
@@ -338,9 +298,9 @@ public class Converter {
         return mode;
     }
 
-    private Mode getMode(String bookPath) {
+    private Mode getMode(String projectName) {
         for (Mode m: modes) {
-            if (m.bookPath.equals(bookPath)) return m;
+            if (m.projectName.equals(projectName)) return m;
         }
 
         return null;
