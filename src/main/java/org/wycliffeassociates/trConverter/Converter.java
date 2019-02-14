@@ -207,7 +207,6 @@ public class Converter {
     {
         BookParser bp = new BookParser();
 
-
         if(wmd.getLanguage().isEmpty())
         {
             wmd.setLanguage(fne.getLang());
@@ -242,42 +241,41 @@ public class Converter {
             String cnStr = FileNameExtractor.unitIntToString(cn);
             wmd.setChapter(cnStr);
         }
-        if(wmd.getModeSlug().isEmpty())
-        {
-            wmd.setModeSlug(mode);
-        }
+
+        // Set mode every time
+        wmd.setModeSlug(mode);
+
         if(wmd.getStartVerse().isEmpty())
         {
             int sv = fne.getStartVerse();
             String svStr = FileNameExtractor.unitIntToString(sv);
             wmd.setStartVerse(svStr);
         }
-        if(wmd.getEndVerse().isEmpty())
+
+        // Set endVerse every time
+        int ev = fne.getEndVerse();
+        if(ev == -1)
         {
-            int ev = fne.getEndVerse();
-            if(ev == -1)
+            if(mode.equals("chunk"))
             {
-                if(mode.equals("chunk"))
-                {
-                    String ant  = bp.GetAnthology(fne.getBook());
-                    String path = "assets/chunks/" + ant + "/" + fne.getBook() + "/chunks.json";
+                String ant  = bp.GetAnthology(fne.getBook());
+                String path = "assets/chunks/" + ant + "/" + fne.getBook() + "/chunks.json";
 
-                    String cnStr = FileNameExtractor.unitIntToString(fne.getChapter());
-                    String svStr = FileNameExtractor.unitIntToString(fne.getStartVerse());
-                    String id = cnStr + "-" + svStr;
+                String cnStr = FileNameExtractor.unitIntToString(fne.getChapter());
+                String svStr = FileNameExtractor.unitIntToString(fne.getStartVerse());
+                String id = cnStr + "-" + svStr;
 
-                    ChunksParser chp = new ChunksParser(path);
-                    ev = chp.GetLastVerse(id);
-                }
-                else
-                {
-                    ev = Integer.parseInt(wmd.getStartVerse());
-                }
+                ChunksParser chp = new ChunksParser(path);
+                ev = chp.GetLastVerse(id);
             }
-
-            String evStr = FileNameExtractor.unitIntToString(ev);
-            wmd.setEndVerse(evStr);
+            else
+            {
+                ev = Integer.parseInt(wmd.getStartVerse());
+            }
         }
+
+        String evStr = FileNameExtractor.unitIntToString(ev);
+        wmd.setEndVerse(evStr);
     }
 
     private String detectMode(File file)
