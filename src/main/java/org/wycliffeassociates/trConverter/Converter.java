@@ -45,7 +45,8 @@ public class Converter {
 
         tr = new File(rootFolder + File.separator + trFolder);
         tra = new File(rootFolder + File.separator + trArchiveFolder);
-        datetime = new File(tra + File.separator + dt);
+
+        generateDatetimeDirectory();
     }
 
     public static void main(String[] args) {
@@ -155,10 +156,15 @@ public class Converter {
 
     private void getModeFromUser() {
         for(Mode m: modes) {
-            while (m.mode.isEmpty()) {
-                System.out.println("Select mode for \"" + m.projectName + "\" (1 - verse, 2 - chunk): ");
+            Boolean modeSet = false;
+            while (!modeSet) {
+                System.out.println("Select mode for \"" + m.projectName + "\". " +
+                        (!m.mode.isEmpty() ? "Current mode: " + m.mode : ""));
+                System.out.println("(1 - verse, 2 - chunk): ");
                 int input = reader.nextInt();
                 m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+
+                if(!m.mode.isEmpty()) modeSet = true;
             }
         }
 
@@ -310,5 +316,13 @@ public class Converter {
 
     public void setModes(List<Mode> modes) {
         this.modes = modes;
+    }
+
+    public void generateDatetimeDirectory() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        Date date = new Date();
+        String dt = dateFormat.format(date);
+
+        datetime = new File(tra + File.separator + dt);
     }
 }
