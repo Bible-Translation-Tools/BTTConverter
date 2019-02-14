@@ -87,10 +87,10 @@ public class Converter {
         }
     }
 
-    public String convert() {
+    public Integer convert() {
         createBackup();
 
-        if(!backupCreated) return "There was an error while creating backup";
+        if(!backupCreated) return -1;
 
         int counter = 0;
 
@@ -150,7 +150,7 @@ public class Converter {
         }
 
         System.out.println("Conversion complete: " + counter + " files have been affected.");
-        return "Conversion complete: " + counter + " files have been affected.";
+        return counter;
     }
 
     private void getModeFromUser() {
