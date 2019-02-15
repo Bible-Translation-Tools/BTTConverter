@@ -1,13 +1,7 @@
 package org.wycliffeassociates.translationrecorder.wav;
 
-//import android.os.Parcel;
-//import android.os.Parcelable;
-
-//import com.door43.tools.reporting.Logger;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-//import org.wycliffeassociates.translationrecorder.project.Project;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -59,9 +53,7 @@ public class WavMetadata {
     public String getChapter(){return mChapter;}
     public String getStartVerse(){return mStartVerse;}
     public String getEndVerse(){return mEndVerse;}
-    public String getContributor() {
-        return mContributor;
-    }
+    public String getContributor() {return mContributor;}
 
     public void setAnthology(String value){mAnthology = value;}
     public void setLanguage(String value){mLanguage = value;}
@@ -72,9 +64,7 @@ public class WavMetadata {
     public void setChapter(String value){mChapter = value;}
     public void setStartVerse(String value){mStartVerse = value;}
     public void setEndVerse(String value){mEndVerse = value;}
-    public void setContributor(String value) {
-        mContributor = value;
-    }
+    public void setContributor(String value) {mContributor = value;}
 
     private String readLabel(ByteBuffer buffer) {
         if (buffer.remaining() >= SIZE_OF_LABEL) {
@@ -259,7 +249,6 @@ public class WavMetadata {
             JSONObject json = new JSONObject(metadata);
             parseMetadataFromJson(json);
         } catch (JSONException e) {
-            //Logger.e(this.toString(), "Tried to parse TR metadata and threw JSONException.", e);
             return;
         }
     }
