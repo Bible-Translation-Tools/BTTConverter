@@ -52,7 +52,7 @@ public class Converter {
     public static void main(String[] args) {
         try {
             Converter converter = new Converter(args);
-            converter.analize();
+            converter.analyze();
             converter.getModeFromUser();
             converter.convert();
         } catch (Exception e) {
@@ -60,7 +60,7 @@ public class Converter {
         }
     }
 
-    public void analize()
+    public void analyze()
     {
         if(!tr.exists()) return;
 
@@ -74,9 +74,8 @@ public class Converter {
                 String lang = parts.length > 0 ? parts[0] : "";
                 String version = parts.length > 1 ? parts[1] : "";
                 String book = parts.length > 3 ? parts[3] : "";
-                String chapter = parts.length > 4 ? parts[4] : "";
 
-                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty() && !chapter.isEmpty()) {
+                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
                     String projectName = String.format("%s | %s | %s",
                             lang, version, book);
 

@@ -74,7 +74,7 @@ public class WavOutputStream extends OutputStream implements Closeable, AutoClos
         }
         mAudioDataLength++;
     }
-    
+
     @Override
     public void flush() throws IOException {
         if (mBuffered) {
