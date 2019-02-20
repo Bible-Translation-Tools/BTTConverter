@@ -278,14 +278,9 @@ public class Converter {
         String evStr = FileNameExtractor.unitIntToString(ev);
         wmd.setEndVerse(evStr);
 
-        // Update verse markers
-        int startv = Integer.parseInt(wmd.getStartVerse());
-        int endv = Integer.parseInt(wmd.getEndVerse());
-
-        if(wmd.getCuePoints().isEmpty() || wmd.getCuePoints().size() < (endv - startv + 1)) {
-            for(int i = startv; i <= endv; i++) {
-                wmd.addCue(new WavCue(String.valueOf(startv), 0));
-            }
+        // Update verse markers if mode is "verse"
+        if(mode == "verse" && wmd.getCuePoints().isEmpty()) {
+            wmd.addCue(new WavCue(wmd.getStartVerse(), 0));
         }
     }
 
