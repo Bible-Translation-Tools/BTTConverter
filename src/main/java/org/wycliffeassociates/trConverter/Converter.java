@@ -280,7 +280,8 @@ public class Converter {
 
         // Update verse markers if mode is "verse"
         if(mode == "verse" && wmd.getCuePoints().isEmpty()) {
-            wmd.addCue(new WavCue(wmd.getStartVerse(), 0));
+            int startv = Integer.parseInt(wmd.getStartVerse());
+            wmd.addCue(new WavCue(String.valueOf(startv), 0));
         }
     }
 
