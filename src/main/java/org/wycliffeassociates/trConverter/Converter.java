@@ -9,6 +9,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
+import org.wycliffeassociates.translationrecorder.wav.WavCue;
 import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
 import org.wycliffeassociates.translationrecorder.wav.WavFile;
 import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
@@ -22,9 +23,9 @@ public class Converter {
     private String rootFolder = ".";
     private String trFolder = "TranslationRecorder";
     private String trArchiveFolder = "TranslationRecorderArchive";
-    private File tr;
-    private File tra;
-    private File datetime;
+    private File trDir;
+    private File traDir;
+    private File dateTimeDir;
     private boolean backupCreated;
     private boolean isCli = true;
 
@@ -39,14 +40,10 @@ public class Converter {
             isCli = args[1] == "c";
         }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        Date date = new Date();
-        String dt = dateFormat.format(date);
+        trDir = new File(rootFolder + File.separator + trFolder);
+        traDir = new File(rootFolder + File.separator + trArchiveFolder);
 
-        tr = new File(rootFolder + File.separator + trFolder);
-        tra = new File(rootFolder + File.separator + trArchiveFolder);
-
-        generateDatetimeDirectory();
+        setDateTimeDir();
     }
 
     public static void main(String[] args) {
@@ -62,9 +59,9 @@ public class Converter {
 
     public void analyze()
     {
-        if(!tr.exists()) return;
+        if(!trDir.exists()) return;
 
-        Collection<File> takes = FileUtils.listFiles(tr, null, true);
+        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
         for (File take: takes) {
             if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
                     FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
@@ -94,7 +91,7 @@ public class Converter {
 
         int counter = 0;
 
-        Collection<File> takes = FileUtils.listFiles(tr, null, true);
+        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
         for (File take: takes) {
             if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
                     FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
@@ -174,31 +171,31 @@ public class Converter {
         backupCreated = false;
 
         // Create Archive folder if needed
-        if(!tra.exists())
+        if(!traDir.exists())
         {
-            tra.mkdir();
+            traDir.mkdir();
         }
 
         // Create DateTime folder
-        if(!datetime.exists())
+        if(!dateTimeDir.exists())
         {
-            datetime.mkdir();
+            dateTimeDir.mkdir();
         }
 
-        if(tr.exists())
+        if(trDir.exists())
         {
-            File[] projects = tr.listFiles();
+            File[] projects = trDir.listFiles();
 
             // Copy project folder to Archive folder
             try {
                 for(File project: projects) {
                     if(project.isDirectory())
                     {
-                        FileUtils.copyDirectoryToDirectory(project, datetime);
+                        FileUtils.copyDirectoryToDirectory(project, dateTimeDir);
                     }
                     else
                     {
-                        FileUtils.copyFileToDirectory(project, datetime);
+                        FileUtils.copyFileToDirectory(project, dateTimeDir);
                     }
                     backupCreated = true;
                 }
@@ -281,6 +278,16 @@ public class Converter {
 
         String evStr = FileNameExtractor.unitIntToString(ev);
         wmd.setEndVerse(evStr);
+
+        // Update verse markers
+        int startv = Integer.parseInt(wmd.getStartVerse());
+        int endv = Integer.parseInt(wmd.getEndVerse());
+
+        if(wmd.getCuePoints().isEmpty() || wmd.getCuePoints().size() < (endv - startv + 1)) {
+            for(int i = startv; i <= endv; i++) {
+                wmd.addCue(new WavCue(String.valueOf(startv), 0));
+            }
+        }
     }
 
     private String detectMode(File file)
@@ -301,6 +308,12 @@ public class Converter {
         return mode;
     }
 
+    private String getDateTimeStr() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
+
     private Mode getMode(String projectName) {
         for (Mode m: modes) {
             if (m.projectName.equals(projectName)) return m;
@@ -317,11 +330,10 @@ public class Converter {
         this.modes = modes;
     }
 
-    public void generateDatetimeDirectory() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        Date date = new Date();
-        String dt = dateFormat.format(date);
-
-        datetime = new File(tra + File.separator + dt);
+    public void setDateTimeDir() {
+        String dt = getDateTimeStr();
+        dateTimeDir = new File(traDir + File.separator + dt);
     }
+
+
 }
