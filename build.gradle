@@ -1,15 +1,17 @@
 plugins {
-    id 'java'
+    id "java"
 }
 
 group 'tRConverter'
-version '0.2.2'
+version '0.2.3'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
+    jcenter()
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
