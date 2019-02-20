@@ -1,18 +1,17 @@
 package org.wycliffeassociates.trConverter;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
+import org.wycliffeassociates.translationrecorder.wav.WavCue;
+import org.wycliffeassociates.translationrecorder.wav.WavFile;
+import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-
-import org.wycliffeassociates.translationrecorder.wav.WavCue;
-import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
-import org.wycliffeassociates.translationrecorder.wav.WavFile;
-import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
 
 
 public class Converter {
