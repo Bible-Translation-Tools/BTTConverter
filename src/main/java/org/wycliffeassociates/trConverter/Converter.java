@@ -69,7 +69,9 @@ public class Converter {
                 String[] parts = take.getName().split("_");
                 String lang = parts.length > 0 ? parts[0] : "";
                 String version = parts.length > 1 ? parts[1] : "";
-                String book = parts.length > 3 ? parts[3] : "";
+                String book = parts.length > 2
+                        ? (parts[2].startsWith("b") && parts.length > 3
+                        ? parts[3] : parts[2]) : "";
 
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
                     String projectName = String.format("%s | %s | %s",
@@ -99,7 +101,9 @@ public class Converter {
                 String[] parts = take.getName().split("_");
                 String lang = parts.length > 0 ? parts[0] : "";
                 String version = parts.length > 1 ? parts[1] : "";
-                String book = parts.length > 3 ? parts[3] : "";
+                String book = parts.length > 2
+                        ? (parts[2].startsWith("b") && parts.length > 3
+                        ? parts[3] : parts[2]) : "";
 
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
                     String projectName = String.format("%s | %s | %s",
@@ -317,10 +321,12 @@ public class Converter {
         return null;
     }
 
+    @SuppressWarnings("unused")
     public List<Mode> getModes() {
         return this.modes;
     }
 
+    @SuppressWarnings("unused")
     public void setModes(List<Mode> modes) {
         this.modes = modes;
     }
