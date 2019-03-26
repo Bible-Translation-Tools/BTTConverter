@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'tRConverter'
-version '0.2.7'
+version '0.2.8'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -23,7 +23,7 @@ jar {
     manifest {
         attributes (
                 "Class-Path": configurations.compile.collect { it.getName() }.join(" "),
-                'Main-Class' : "org.wycliffeassociates.trConverter.Converter"
+                'Main-Class' : "org.wycliffeassociates.trConverter.Launcher"
         )
     }
 
