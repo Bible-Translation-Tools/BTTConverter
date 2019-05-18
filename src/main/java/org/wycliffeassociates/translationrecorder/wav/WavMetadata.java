@@ -164,6 +164,10 @@ public class WavMetadata {
                     //else ignore and move to the next subchunk
                     WavUtils.seek(chunk, chunkSize);
                 }
+            } else {
+                //else ignore and move to the next subchunk
+                int chunkSize = chunk.getInt();
+                WavUtils.seek(chunk, chunkSize);
             }
         }
     }
