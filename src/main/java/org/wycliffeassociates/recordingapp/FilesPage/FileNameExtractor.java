@@ -141,9 +141,9 @@ public class FileNameExtractor {
             String PROJECT = "(([a-zA-Z]{3})_([1-3]*[a-zA-Z]+))";
             String CHAPTER = "([\\d]{2,3})";
             String VERSE = "([\\d]{2,3})";
-            String TAKE = "([\\d]{2,3})";
+            String TAKE = "_?([\\d]{2,3})?";
             String FILENAME_PATTERN = LANGUAGE + UNDERSCORE + PROJECT + UNDERSCORE + CHAPTER +
-                    DASH + VERSE + UNDERSCORE + TAKE + ".*";
+                    DASH + VERSE + TAKE + ".*";
 
             Pattern p = Pattern.compile(FILENAME_PATTERN);
             Matcher m = p.matcher(file);
@@ -159,7 +159,7 @@ public class FileNameExtractor {
                 mChap = Integer.parseInt(m.group(5));
                 mStartVerse = Integer.parseInt(m.group(6));
                 mEndVerse = -1;
-                mTake = Integer.parseInt(m.group(7));
+                mTake = m.group(7) != null ? Integer.parseInt(m.group(7)) : 1;
                 mMatched = true;
             } else {
                 mMatched = false;
