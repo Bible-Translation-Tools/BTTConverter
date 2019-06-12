@@ -13,79 +13,34 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-
-public class Converter {
+/**
+ * This class is to convert takes from old version of translationRecorder
+ * to new. Provide at least -t parameter with a directory
+ * that contains TranslationRecorder directory as a child
+ */
+public class Converter implements IConverter {
 
     private List<Mode> modes = new ArrayList<>();
 
-    private Scanner reader = new Scanner(System.in);
-    private String rootFolder = ".";
-    private String trFolder = "TranslationRecorder";
-    private String trArchiveFolder = "TranslationRecorderArchive";
-    private File trDir;
-    private File traDir;
-    private File dateTimeDir;
-    private boolean backupCreated;
-    private boolean isCli = true;
+    Scanner reader = new Scanner(System.in);
+    private String rootFolder;
+    String trFolder = "TranslationRecorder";
+    String trArchiveFolder = "TranslationRecorderArchive";
+    File trDir;
+    File traDir;
+    File dateTimeDir;
+    boolean backupCreated;
 
-    public Converter(String[] args) throws Exception {
-        if(args.length > 0)
-        {
-            rootFolder = args[0];
-        }
-
-        if(args.length > 1)
-        {
-            isCli = args[1] == "c";
-        }
-
+    public Converter(String dirPath) throws Exception {
+        rootFolder = dirPath;
         trDir = new File(rootFolder + File.separator + trFolder);
         traDir = new File(rootFolder + File.separator + trArchiveFolder);
 
         setDateTimeDir();
     }
 
-    public static void main(String[] args) {
-        try {
-            Converter converter = new Converter(args);
-            converter.analyze();
-            converter.getModeFromUser();
-            converter.convert();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void analyze()
-    {
-        if(!trDir.exists()) return;
-
-        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
-        for (File take: takes) {
-            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
-                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
-                    !take.getName().equals("chapter.wav")) {
-
-                String[] parts = take.getName().split("_");
-                String lang = parts.length > 0 ? parts[0] : "";
-                String version = parts.length > 1 ? parts[1] : "";
-                String book = parts.length > 2
-                        ? (parts[2].startsWith("b") && parts.length > 3
-                        ? parts[3] : parts[2]) : "";
-
-                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
-                    String projectName = String.format("%s | %s | %s",
-                            lang, version, book);
-
-                    if (getMode(projectName) == null) {
-                        modes.add(new Mode(detectMode(take), projectName));
-                    }
-                }
-            }
-        }
-    }
-
-    public Integer convert() {
+    @Override
+    public Integer execute() {
         createBackup();
 
         if(!backupCreated) return -1;
@@ -153,7 +108,38 @@ public class Converter {
         return counter;
     }
 
-    private void getModeFromUser() {
+    @Override
+    public void analyze()
+    {
+        if(!trDir.exists()) return;
+
+        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
+        for (File take: takes) {
+            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
+                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
+                    !take.getName().equals("chapter.wav")) {
+
+                String[] parts = take.getName().split("_");
+                String lang = parts.length > 0 ? parts[0] : "";
+                String version = parts.length > 1 ? parts[1] : "";
+                String book = parts.length > 2
+                        ? (parts[2].startsWith("b") && parts.length > 3
+                        ? parts[3] : parts[2]) : "";
+
+                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
+                    String projectName = String.format("%s | %s | %s",
+                            lang, version, book);
+
+                    if (getMode(projectName) == null) {
+                        modes.add(new Mode(detectMode(take), projectName));
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void getModeFromUser() {
         for(Mode m: modes) {
             Boolean modeSet = false;
             while (!modeSet) {
@@ -168,6 +154,22 @@ public class Converter {
         }
 
         reader.close();
+    }
+
+    @Override
+    public List<Mode> getModes() {
+        return this.modes;
+    }
+
+    @Override
+    public void setModes(List<Mode> modes) {
+        this.modes = modes;
+    }
+
+    @Override
+    public void setDateTimeDir() {
+        String dt = getDateTimeStr();
+        dateTimeDir = new File(traDir + File.separator + dt);
     }
 
     private void createBackup() {
@@ -320,21 +322,4 @@ public class Converter {
 
         return null;
     }
-
-    @SuppressWarnings("unused")
-    public List<Mode> getModes() {
-        return this.modes;
-    }
-
-    @SuppressWarnings("unused")
-    public void setModes(List<Mode> modes) {
-        this.modes = modes;
-    }
-
-    public void setDateTimeDir() {
-        String dt = getDateTimeStr();
-        dateTimeDir = new File(traDir + File.separator + dt);
-    }
-
-
 }
