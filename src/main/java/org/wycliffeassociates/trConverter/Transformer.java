@@ -33,6 +33,8 @@ public class Transformer implements ITransformer {
     String langSlug;
     String langName;
 
+    String originalVersion;
+
     String rootPath;
     String archivePath;
     File rootDir;
@@ -81,6 +83,8 @@ public class Transformer implements ITransformer {
 
         this.updateManifest();
         int counter = this.updateTakeFiles();
+
+        this.renameParents();
         System.out.println("Transformation complete: " + counter + " files have been affected.");
         return counter;
     }
@@ -214,6 +218,8 @@ public class Transformer implements ITransformer {
             WavMetadata wmd = wf.getMetadata();
             String parentDir = takeFile.getParent();
 
+            this.originalVersion = wmd.getVersion();
+
             if(this.langSlug != null) {
                 wmd.setLanguage(this.langSlug);
             }
@@ -231,6 +237,27 @@ public class Transformer implements ITransformer {
             counter++;
         }
         return counter;
+    }
+
+    private void renameParents() {
+        if(this.langSlug != null) {
+            try {
+                File target = new File(this.rootDir + File.separator + this.langSlug);
+                FileUtils.moveDirectory(this.projectDir, target);
+                this.projectDir = target;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if(this.version != null) {
+            try {
+                File source = new File(this.projectDir + File.separator + this.originalVersion);
+                File target = new File(this.projectDir + File.separator + this.version);
+                FileUtils.moveDirectory(source, target);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private String getVersionName(String version) {

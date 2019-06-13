@@ -2,15 +2,20 @@ package org.wycliffeassociates.trConverter;
 
 public class Mode {
     public String mode;
-    public String projectName;
+    public String language;
+    public String version;
+    public String book;
 
-    public Mode(String mode, String projectName) {
+    public Mode(String mode, String language, String version, String book) {
         this.mode = mode;
-        this.projectName = projectName;
+        this.language = language;
+        this.version = version;
+        this.book = book;
     }
 
     @Override
     public String toString() {
-        return this.projectName;
+        return String.format("%s | %s | %s",
+                this.language, this.version, this.book);
     }
 }
