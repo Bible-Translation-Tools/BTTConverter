@@ -62,10 +62,7 @@ public class Converter implements IConverter {
                         ? parts[3] : parts[2]) : "";
 
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
-                    String projectName = String.format("%s | %s | %s",
-                            lang, version, book);
-
-                    Mode bookMode = this.getMode(projectName);
+                    Mode bookMode = this.getMode(lang, version, book);
                     if(bookMode == null) continue;
 
                     String mode = bookMode.mode;
@@ -128,11 +125,8 @@ public class Converter implements IConverter {
                         ? parts[3] : parts[2]) : "";
 
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
-                    String projectName = String.format("%s | %s | %s",
-                            lang, version, book);
-
-                    if (this.getMode(projectName) == null) {
-                        this.modes.add(new Mode(this.detectMode(take), projectName));
+                    if (this.getMode(lang, version, book) == null) {
+                        this.modes.add(new Mode(this.detectMode(take), lang, version, book));
                     }
                 }
             }
@@ -144,7 +138,7 @@ public class Converter implements IConverter {
         for(Mode m: this.modes) {
             Boolean modeSet = false;
             while (!modeSet) {
-                System.out.println("Select mode for \"" + m.projectName + "\". " +
+                System.out.println("Select mode for \"" + m + "\". " +
                         (!m.mode.isEmpty() ? "Current mode: " + m.mode : ""));
                 System.out.println("(1 - verse, 2 - chunk): ");
                 int input = this.reader.nextInt();
@@ -316,9 +310,11 @@ public class Converter implements IConverter {
         return dateFormat.format(date);
     }
 
-    private Mode getMode(String projectName) {
+    private Mode getMode(String language, String version, String book) {
         for (Mode m: this.modes) {
-            if (m.projectName.equals(projectName)) return m;
+            if (m.language.equals(language) && m.version.equals(version) && m.book.equals(book)) {
+                return m;
+            }
         }
 
         return null;
