@@ -22,10 +22,10 @@ Open a terminal and run the commands:
 ### Transform
 *a) When you want to change the language of the project files and/or resource type*
 
-*-p PROJECT* - project directory (it's usually an original language code)
-*-lc LANGUAGE_CODE* - language code
+*-p PROJECT* - project directory (it's usually an original language code)  
+*-lc LANGUAGE_CODE* - language code  
 *-ln LANGUAGE_NAME* - original language name (optional). It's used for TranslationExchange transfered projects  
-*-v VERSION* - resource type (version) code. For example: ulb, udb, reg  
+*-v VERSION* - resource type (version) code. For example: ulb, udb, reg    
 
     java -jar tRConverter.jar -t -d <PATH> -p <PROJECT> -lc <LANGUAGE_CODE> -ln <LANGUAGE_NAME> -v <VERSION>
 
