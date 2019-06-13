@@ -23,31 +23,32 @@ public class Converter implements IConverter {
     private List<Mode> modes = new ArrayList<>();
 
     Scanner reader = new Scanner(System.in);
-    private String rootFolder;
-    String trFolder = "TranslationRecorder";
-    String trArchiveFolder = "TranslationRecorderArchive";
-    File trDir;
-    File traDir;
+    String rootPath;
+    String archivePath;
+    File rootDir;
+    File archiveDir;
     File dateTimeDir;
     boolean backupCreated;
 
-    public Converter(String dirPath) throws Exception {
-        rootFolder = dirPath;
-        trDir = new File(rootFolder + File.separator + trFolder);
-        traDir = new File(rootFolder + File.separator + trArchiveFolder);
+    public Converter(String rootPath) throws Exception {
+        this.rootPath = rootPath;
+        this.archivePath = rootPath + "Archive";
 
-        setDateTimeDir();
+        this.rootDir = new File(this.rootPath);
+        this.archiveDir = new File(this.archivePath);
+
+        this.setDateTimeDir();
     }
 
     @Override
     public Integer execute() {
-        createBackup();
+        this.createBackup();
 
-        if(!backupCreated) return -1;
+        if(!this.backupCreated) return -1;
 
         int counter = 0;
 
-        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
+        Collection<File> takes = FileUtils.listFiles(this.rootDir, null, true);
         for (File take: takes) {
             if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
                     FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
@@ -64,7 +65,7 @@ public class Converter implements IConverter {
                     String projectName = String.format("%s | %s | %s",
                             lang, version, book);
 
-                    Mode bookMode = getMode(projectName);
+                    Mode bookMode = this.getMode(projectName);
                     if(bookMode == null) continue;
 
                     String mode = bookMode.mode;
@@ -75,10 +76,10 @@ public class Converter implements IConverter {
 
                     if(fne.matched())
                     {
-                        updateMetadata(wmd, fne, mode);
+                        this.updateMetadata(wmd, fne, mode);
                         wf.commit();
 
-                        // Rename file if it was created prior to ver.8.5
+                        // Rename file if it was created prior to version.8.5
                         if(fne.version84())
                         {
                             String newName = take.getParent() + File.separator;
@@ -111,9 +112,9 @@ public class Converter implements IConverter {
     @Override
     public void analyze()
     {
-        if(!trDir.exists()) return;
+        if(!this.rootDir.exists()) return;
 
-        Collection<File> takes = FileUtils.listFiles(trDir, null, true);
+        Collection<File> takes = FileUtils.listFiles(this.rootDir, null, true);
         for (File take: takes) {
             if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
                     FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
@@ -130,8 +131,8 @@ public class Converter implements IConverter {
                     String projectName = String.format("%s | %s | %s",
                             lang, version, book);
 
-                    if (getMode(projectName) == null) {
-                        modes.add(new Mode(detectMode(take), projectName));
+                    if (this.getMode(projectName) == null) {
+                        this.modes.add(new Mode(this.detectMode(take), projectName));
                     }
                 }
             }
@@ -140,20 +141,20 @@ public class Converter implements IConverter {
 
     @Override
     public void getModeFromUser() {
-        for(Mode m: modes) {
+        for(Mode m: this.modes) {
             Boolean modeSet = false;
             while (!modeSet) {
                 System.out.println("Select mode for \"" + m.projectName + "\". " +
                         (!m.mode.isEmpty() ? "Current mode: " + m.mode : ""));
                 System.out.println("(1 - verse, 2 - chunk): ");
-                int input = reader.nextInt();
+                int input = this.reader.nextInt();
                 m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
 
                 if(!m.mode.isEmpty()) modeSet = true;
             }
         }
 
-        reader.close();
+        this.reader.close();
     }
 
     @Override
@@ -168,41 +169,41 @@ public class Converter implements IConverter {
 
     @Override
     public void setDateTimeDir() {
-        String dt = getDateTimeStr();
-        dateTimeDir = new File(traDir + File.separator + dt);
+        String dt = this.getDateTimeStr();
+        this.dateTimeDir = new File(this.archiveDir + File.separator + dt);
     }
 
     private void createBackup() {
-        backupCreated = false;
+        this.backupCreated = false;
 
         // Create Archive folder if needed
-        if(!traDir.exists())
+        if(!this.archiveDir.exists())
         {
-            traDir.mkdir();
+            this.archiveDir.mkdir();
         }
 
         // Create DateTime folder
-        if(!dateTimeDir.exists())
+        if(!this.dateTimeDir.exists())
         {
-            dateTimeDir.mkdir();
+            this.dateTimeDir.mkdir();
         }
 
-        if(trDir.exists())
+        if(this.rootDir.exists())
         {
-            File[] projects = trDir.listFiles();
+            File[] projects = rootDir.listFiles();
 
             // Copy project folder to Archive folder
             try {
                 for(File project: projects) {
                     if(project.isDirectory())
                     {
-                        FileUtils.copyDirectoryToDirectory(project, dateTimeDir);
+                        FileUtils.copyDirectoryToDirectory(project, this.dateTimeDir);
                     }
                     else
                     {
-                        FileUtils.copyFileToDirectory(project, dateTimeDir);
+                        FileUtils.copyFileToDirectory(project, this.dateTimeDir);
                     }
-                    backupCreated = true;
+                    this.backupCreated = true;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -316,7 +317,7 @@ public class Converter implements IConverter {
     }
 
     private Mode getMode(String projectName) {
-        for (Mode m: modes) {
+        for (Mode m: this.modes) {
             if (m.projectName.equals(projectName)) return m;
         }
 

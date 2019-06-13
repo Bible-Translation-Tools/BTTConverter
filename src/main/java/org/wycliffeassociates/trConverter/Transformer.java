@@ -11,7 +11,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * This class is to change language and version of the takes
@@ -22,46 +26,146 @@ import java.util.Collection;
  * -lc language code (language slug: en, ru, es, etc...)
  * -ln language name (original language name: Español Latin America)
  */
-public class Transformer implements IExecutor {
+public class Transformer implements ITransformer {
 
-    String targetDirPath;
-    String ver;
+    String projectPath;
+    String version;
     String langSlug;
     String langName;
-    File targetDir;
+
+    String rootPath;
+    String archivePath;
+    File rootDir;
+    File archiveDir;
+    File projectDir;
+    File dateTimeDir;
+    boolean backupCreated;
 
     /**
      * Constructor
-     * @param dirPath path to directory
-     * @param languageSlug Language code
-     * @param languageName Language original name
+     * @param rootPath root directory path
+     * @param projectPath project directory
+     * @param langSlug Language code
+     * @param langName Language original name
      * @param version Project version
      * @throws Exception
      */
-    public Transformer(String dirPath, String languageSlug, String languageName, String version) throws Exception {
-        targetDirPath = dirPath;
-        targetDir = new File(targetDirPath);
-        langSlug = languageSlug != null ? languageSlug : "en";
-        langName = languageName != null ? languageName : "English";
-        ver = version != null ? version : "ulb";
+    public Transformer(String rootPath, String projectPath,
+                       String langSlug, String langName, String version) throws Exception {
+        this.rootPath = rootPath;
+        this.archivePath = this.rootPath + "Archive";
+
+        if(projectPath == null) {
+            throw new InvalidParameterException("Please specify the project directory, using parameter -p");
+        }
+
+        this.projectPath = projectPath;
+        this.langSlug = langSlug;
+        this.langName = langName;
+        this.version = version;
+
+        this.rootDir = new File(this.rootPath);
+        this.archiveDir = new File(this.archivePath);
+        this.projectDir = new File(this.rootDir + File.separator + this.projectPath);
+
+        this.setDateTimeDir();
     }
 
     @Override
     public Integer execute() {
-        JSONObject projectManifest = open_manifest();
+        if(!this.rootDir.exists()) return -1;
+
+        this.createBackup();
+
+        if(!this.backupCreated) return -1;
+
+        this.updateManifest();
+        int counter = this.updateTakeFiles();
+        System.out.println("Transformation complete: " + counter + " files have been affected.");
+        return counter;
+    }
+
+    @Override
+    public void setDateTimeDir() {
+        String dt = this.getDateTimeStr();
+        this.dateTimeDir = new File(this.archiveDir + File.separator + dt);
+    }
+
+    private void createBackup() {
+        this.backupCreated = false;
+
+        // Create Archive folder if needed
+        if(!this.archiveDir.exists())
+        {
+            this.archiveDir.mkdir();
+        }
+
+        // Create DateTime folder
+        if(!this.dateTimeDir.exists())
+        {
+            this.dateTimeDir.mkdir();
+        }
+
+        File[] projects = this.rootDir.listFiles();
+
+        // Copy contents of Root folder to Archive folder
+        try {
+            for(File project: projects) {
+                if(project.isDirectory())
+                {
+                    FileUtils.copyDirectoryToDirectory(project, this.dateTimeDir);
+                }
+                else
+                {
+                    FileUtils.copyFileToDirectory(project, this.dateTimeDir);
+                }
+                this.backupCreated = true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JSONObject open_manifest() {
+        try {
+            File file = new File(this.projectDir + File.separator + "manifest.json");
+            String content = FileUtils.readFileToString(file, "utf-8");
+            return new JSONObject(content);
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    private void writeManifest(JSONObject manifest) {
+        File outFile = new File(this.projectDir + File.separator + "manifest.json");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
+            manifest.write(bw);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateManifest() {
+        JSONObject projectManifest = this.open_manifest();
 
         if(projectManifest != null) {
             JSONObject language = projectManifest.getJSONObject("language");
             JSONObject version = projectManifest.getJSONObject("version");
             JSONArray chapters = projectManifest.getJSONArray("manifest");
 
-            language.put("slug", langSlug);
-            language.put("name", langName);
-            version.put("slug", ver);
-            version.put("name", getVersionName(ver));
-
-            projectManifest.put("language", language);
-            projectManifest.put("version", version);
+            if(this.langSlug != null) {
+                language.put("slug", this.langSlug);
+                language.put("name", this.langName);
+                projectManifest.put("language", language);
+            }
+            if(this.version != null) {
+                version.put("slug", this.version);
+                version.put("name", this.getVersionName(this.version));
+                projectManifest.put("version", version);
+            }
 
             for (int i = 0; i < chapters.length(); i++) {
                 JSONObject chapter = chapters.getJSONObject(i);
@@ -75,10 +179,10 @@ public class Transformer implements IExecutor {
                         String takeName = take.get("name").toString();
 
                         String[] takeNameParts = takeName.split("_");
-                        takeNameParts[0] = langSlug;
-                        takeNameParts[1] = ver;
+                        takeNameParts[0] = language.getString("slug");
+                        takeNameParts[1] = version.getString("slug");
 
-                        takeName = strJoin(takeNameParts, "_");
+                        takeName = this.strJoin(takeNameParts, "_");
                         take.put("name", takeName);
 
                         try {
@@ -86,11 +190,11 @@ public class Transformer implements IExecutor {
                             String[] takeLocationParts = takeLocation.split("/");
                             String takeLocationName = takeLocationParts[takeLocationParts.length-1];
                             String[] takeLocationNameParts = takeLocationName.split("_");
-                            takeLocationNameParts[0] = langSlug;
-                            takeLocationNameParts[1] = ver;
-                            takeLocationName = strJoin(takeLocationNameParts, "_");
+                            takeLocationNameParts[0] = language.getString("slug");
+                            takeLocationNameParts[1] = version.getString("slug");
+                            takeLocationName = this.strJoin(takeLocationNameParts, "_");
                             takeLocationParts[takeLocationParts.length-1] = takeLocationName;
-                            takeLocation = strJoin(takeLocationParts, "/");
+                            takeLocation = this.strJoin(takeLocationParts, "/");
                             take.put("location", takeLocation);
                         } catch (JSONException e) {
                             //System.out.println("location key not found in manifest. Skipping...");
@@ -98,53 +202,31 @@ public class Transformer implements IExecutor {
                     }
                 }
             }
-            writeManifest(projectManifest);
-        }
-
-        int counter = updateTakeFiles();
-        System.out.println("Transformation complete: " + counter + " files have been affected.");
-        return counter;
-    }
-
-    private JSONObject open_manifest() {
-        try {
-            File file = new File(targetDirPath + File.separator + "manifest.json");
-            String content = FileUtils.readFileToString(file, "utf-8");
-            return new JSONObject(content);
-        }
-        catch(Exception e)
-        {
-            System.out.println(e.getMessage());
-            return null;
-        }
-    }
-
-    private void writeManifest(JSONObject manifest) {
-        File outFile = new File(targetDirPath + File.separator + "manifest.json");
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
-            manifest.write(bw);
-        } catch (IOException e) {
-            e.printStackTrace();
+            this.writeManifest(projectManifest);
         }
     }
 
     private Integer updateTakeFiles() {
         int counter = 0;
-        Collection<File> takes = FileUtils.listFiles(targetDir, new String[]{"wav"}, true);
+        Collection<File> takes = FileUtils.listFiles(this.projectDir, new String[]{"wav"}, true);
         for (File takeFile: takes) {
             WavFile wf = new WavFile(takeFile);
             WavMetadata wmd = wf.getMetadata();
             String parentDir = takeFile.getParent();
 
-            wmd.setLanguage(langSlug);
-            wmd.setVersion(ver);
+            if(this.langSlug != null) {
+                wmd.setLanguage(this.langSlug);
+            }
+            if(this.version != null) {
+                wmd.setVersion(this.version);
+            }
             wf.commit();
 
             String[] takeNameParts = takeFile.getName().split("_");
-            takeNameParts[0] = langSlug;
-            takeNameParts[1] = ver;
+            takeNameParts[0] = wmd.getLanguage();
+            takeNameParts[1] = wmd.getVersion();
 
-            String takeName = strJoin(takeNameParts, "_");
+            String takeName = this.strJoin(takeNameParts, "_");
             takeFile.renameTo(new File(parentDir + File.separator + takeName));
             counter++;
         }
@@ -169,5 +251,11 @@ public class Transformer implements IExecutor {
             sbStr.append(aArr[i]);
         }
         return sbStr.toString();
+    }
+
+    private String getDateTimeStr() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        Date date = new Date();
+        return dateFormat.format(date);
     }
 }
