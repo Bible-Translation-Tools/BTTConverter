@@ -243,7 +243,8 @@ public class Transformer implements ITransformer {
         if(this.langSlug != null) {
             try {
                 File target = new File(this.rootDir + File.separator + this.langSlug);
-                FileUtils.moveDirectory(this.projectDir, target);
+                FileUtils.copyDirectory(this.projectDir, target);
+                FileUtils.deleteDirectory(this.projectDir);
                 this.projectDir = target;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -253,7 +254,8 @@ public class Transformer implements ITransformer {
             try {
                 File source = new File(this.projectDir + File.separator + this.originalVersion);
                 File target = new File(this.projectDir + File.separator + this.version);
-                FileUtils.moveDirectory(source, target);
+                FileUtils.copyDirectory(source, target);
+                FileUtils.deleteDirectory(source);
             } catch (IOException e) {
                 e.printStackTrace();
             }
