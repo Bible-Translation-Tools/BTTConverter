@@ -244,7 +244,7 @@ public class Transformer implements ITransformer {
             try {
                 File target = new File(this.rootDir + File.separator + this.langSlug);
                 FileUtils.copyDirectory(this.projectDir, target);
-                FileUtils.deleteDirectory(this.projectDir);
+                this.deleteDirectory(this.projectDir);
                 this.projectDir = target;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -255,7 +255,7 @@ public class Transformer implements ITransformer {
                 File source = new File(this.projectDir + File.separator + this.originalVersion);
                 File target = new File(this.projectDir + File.separator + this.version);
                 FileUtils.copyDirectory(source, target);
-                FileUtils.deleteDirectory(source);
+                this.deleteDirectory(source);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -286,5 +286,27 @@ public class Transformer implements ITransformer {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         Date date = new Date();
         return dateFormat.format(date);
+    }
+
+    private void deleteDirectory(File path)
+    {
+        if (path == null)
+            return;
+        if (path.exists())
+        {
+            for(File f : path.listFiles())
+            {
+                if(f.isDirectory())
+                {
+                    deleteDirectory(f);
+                    f.delete();
+                }
+                else
+                {
+                    f.delete();
+                }
+            }
+            path.delete();
+        }
     }
 }
