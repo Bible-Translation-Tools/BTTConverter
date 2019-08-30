@@ -1,4 +1,4 @@
-package org.wycliffeassociates.trConverter;
+package bible.translationtools.converterlib;
 
 public class Mode {
     public String mode;

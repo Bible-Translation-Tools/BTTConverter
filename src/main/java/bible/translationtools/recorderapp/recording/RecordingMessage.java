@@ -1,4 +1,4 @@
-package org.wycliffeassociates.translationrecorder.Recording;
+package bible.translationtools.recorderapp.recording;
 
 /**
  * Created by jsarabia on 7/24/15.

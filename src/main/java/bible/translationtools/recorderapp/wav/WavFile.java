@@ -1,7 +1,7 @@
-package org.wycliffeassociates.translationrecorder.wav;
+package bible.translationtools.recorderapp.wav;
 
 import org.json.JSONException;
-import org.wycliffeassociates.translationrecorder.AudioInfo;
+import bible.translationtools.recorderapp.AudioInfo;
 
 import java.io.*;
 import java.nio.ByteBuffer;

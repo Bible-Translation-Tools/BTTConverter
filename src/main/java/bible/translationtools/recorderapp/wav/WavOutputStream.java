@@ -1,4 +1,4 @@
-package org.wycliffeassociates.translationrecorder.wav;
+package bible.translationtools.recorderapp.wav;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -56,14 +56,6 @@ public class WavOutputStream extends OutputStream implements Closeable, AutoClos
             mBuffered = true;
         }
     }
-
-//    public WavOutputStream(WavFile file, boolean buffered) throws FileNotFoundException {
-//        mFile = file;
-//        FileOutputStream fos = new FileOutputStream(file.getFile(), true);
-//        if (buffered) {
-//            mOutputStream = new BufferedOutputStream(fos);
-//        }
-//    }
 
     @Override
     public void write(int oneByte) throws IOException {

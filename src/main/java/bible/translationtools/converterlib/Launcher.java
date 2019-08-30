@@ -1,4 +1,4 @@
-package org.wycliffeassociates.trConverter;
+package bible.translationtools.converterlib;
 
 import java.util.HashMap;
 import java.util.Map;

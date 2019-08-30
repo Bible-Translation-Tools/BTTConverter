@@ -1,11 +1,8 @@
-package org.wycliffeassociates.recordingapp.FilesPage;
+package bible.translationtools.recorderapp.filespage;
 
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-//import wycliffeassociates.recordingapp.ProjectManager.Project;
-//import wycliffeassociates.recordingapp.SettingsPage.Settings;
 
 /**
  * Created by sarabiaj on 3/15/2016.
@@ -77,32 +74,11 @@ public class FileNameExtractor {
         }
     }
 
-//    private FileNameExtractor(Project project, int chapter, int startVerse, int endVerse){
-//        this(project.getTargetLanguage(), project.getSource(), project.getBookNumber(), project.getSlug(), project.getProject(), chapterIntToString(project, chapter), unitIntToString(startVerse),
-//                unitIntToString(endVerse), "00");
-//    }
-
     public static String unitIntToString(int unit){
         return String.format("%02d", unit);
     }
 
-
-//    public FileNameExtractor(SharedPreferences pref){
-//        this(pref.getString(Settings.KEY_PREF_LANG, ""),
-//                pref.getString(Settings.KEY_PREF_SOURCE, ""),
-//                pref.getString(Settings.KEY_PREF_BOOK_NUM, ""),
-//                pref.getString(Settings.KEY_PREF_BOOK, ""),
-//                pref.getString(Settings.KEY_PREF_PROJECT, ""),
-//                pref.getString(Settings.KEY_PREF_CHAPTER, ""),
-//                pref.getString(Settings.KEY_PREF_START_VERSE, ""),
-//                pref.getString(Settings.KEY_PREF_END_VERSE, ""),
-//                pref.getString(Settings.KEY_PREF_TAKE, ""));
-//    }
-
     private void extractData(String file){
-        //includes the wav extention, could replace this with .*?
-        //String FILENAME_PATTERN = "([a-zA-Z]{2,3}[-[\\d\\w]+]*)_([a-zA-Z]{3})_([1-3]*[a-zA-Z]+)_([0-9]{2})-([0-9]{2})(_([0-9]{2}))?.*";
-
         if(!mVersion84)
         {
             String UNDERSCORE = "_";
@@ -116,8 +92,7 @@ public class FileNameExtractor {
             Pattern p = Pattern.compile(FILENAME_PATTERN);
             Matcher m = p.matcher(file);
             boolean found = m.find();
-            //System.out.println("file is " + file + "\npattern is " + p.pattern());
-            //m.group starts with the pattern, so the first group is at 1
+
             if(found){
                 mLang = m.group(1);
                 mProject = m.group(2);
@@ -148,8 +123,7 @@ public class FileNameExtractor {
             Pattern p = Pattern.compile(FILENAME_PATTERN);
             Matcher m = p.matcher(file);
             boolean found = m.find();
-            //System.out.println("file is " + file + "\npattern is " + p.pattern());
-            //m.group starts with the pattern, so the first group is at 1
+
             if(found){
                 mLang = m.group(1);
                 mProject = m.group(2);
@@ -243,11 +217,6 @@ public class FileNameExtractor {
         return fne.getNameWithoutTake();
     }
 
-//    public static String getNameWithoutTake(SharedPreferences pref){
-//        FileNameExtractor fne = new FileNameExtractor(pref);
-//        return fne.getNameWithoutTake();
-//    }
-
     public static String getNameWithoutExtention(File file){
         String name = file.getName();
         if(name.contains(".wav")){
@@ -286,19 +255,6 @@ public class FileNameExtractor {
         }
         return maxTake;
     }
-
-//    public static File createFile(Project project, int chapter, int startVerse, int endVerse) {
-//        FileNameExtractor fne = new FileNameExtractor(project, chapter, startVerse, endVerse);
-//        File dir = fne.getDirectoryFromProject(project, chapter);
-//        String nameWithoutTake = fne.getNameWithoutTake();
-//        int take = fne.getLargestTake(dir, nameWithoutTake)+1;
-//        return new File(dir, nameWithoutTake + "_t" + String.format("%02d", take) + ".wav");
-//    }
-
-//    public static String getNameFromProject(Project project, int chapter, int startVerse, int endVerse) {
-//        FileNameExtractor fne = new FileNameExtractor(project, chapter, startVerse, endVerse);
-//        return fne.getNameWithoutTake();
-//    }
 
     //Extracts the identifiable section of a filename for source audio
     public static String getChapterAndVerseSection(String name){
