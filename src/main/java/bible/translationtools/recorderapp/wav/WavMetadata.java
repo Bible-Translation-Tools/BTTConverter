@@ -1,4 +1,4 @@
-package org.wycliffeassociates.translationrecorder.wav;
+package bible.translationtools.recorderapp.wav;
 
 import org.json.JSONException;
 import org.json.JSONObject;

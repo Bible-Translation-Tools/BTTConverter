@@ -1,15 +1,9 @@
-package org.wycliffeassociates.translationrecorder.Recording;
+package bible.translationtools.recorderapp.recording;
 
-import org.wycliffeassociates.translationrecorder.AudioInfo;
-//import org.wycliffeassociates.translationrecorder.Reporting.Logger;
-import org.wycliffeassociates.translationrecorder.wav.WavFile;
-import org.wycliffeassociates.translationrecorder.wav.WavOutputStream;
+import bible.translationtools.recorderapp.AudioInfo;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 

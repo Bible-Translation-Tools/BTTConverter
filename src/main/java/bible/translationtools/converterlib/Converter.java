@@ -1,11 +1,11 @@
-package org.wycliffeassociates.trConverter;
+package bible.translationtools.converterlib;
 
+import bible.translationtools.recorderapp.wav.WavFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.wycliffeassociates.recordingapp.FilesPage.FileNameExtractor;
-import org.wycliffeassociates.translationrecorder.wav.WavCue;
-import org.wycliffeassociates.translationrecorder.wav.WavFile;
-import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
+import bible.translationtools.recorderapp.wav.WavCue;
+import bible.translationtools.recorderapp.wav.WavMetadata;
+import bible.translationtools.recorderapp.filespage.FileNameExtractor;
 
 import java.io.File;
 import java.io.IOException;

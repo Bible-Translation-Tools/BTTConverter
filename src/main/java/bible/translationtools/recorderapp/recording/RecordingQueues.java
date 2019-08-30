@@ -1,6 +1,4 @@
-package org.wycliffeassociates.translationrecorder.Recording;
-
-//import org.wycliffeassociates.translationrecorder.Reporting.Logger;
+package bible.translationtools.recorderapp.recording;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -22,7 +20,6 @@ public class RecordingQueues {
             RecordingQueues.compressionQueue.put(new RecordingMessage(null, true, false));
             RecordingQueues.UIQueue.put(new RecordingMessage(null, true, false));
         } catch (InterruptedException e) {
-//            Logger.e("RecordingQueues", "InterruptedException in onPause queues", e);
             e.printStackTrace();
         }
     }
@@ -35,7 +32,6 @@ public class RecordingQueues {
             //Block until the threads are done
             Boolean done = RecordingQueues.doneUI.take();
         } catch (InterruptedException e) {
-//            Logger.e("RecordingQueues", "InterruptedException in stop volume test", e);
             e.printStackTrace();
         }
     }
@@ -52,7 +48,6 @@ public class RecordingQueues {
             Boolean done2 = RecordingQueues.doneWritingCompressed.take();
             Boolean done3 = RecordingQueues.doneUI.take();
         } catch (InterruptedException e) {
-//            Logger.e("RecordingQueues", "InterruptedException in stop queues", e);
             e.printStackTrace();
         }
     }

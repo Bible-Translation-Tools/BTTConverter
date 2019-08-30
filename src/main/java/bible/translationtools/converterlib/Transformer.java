@@ -1,11 +1,11 @@
-package org.wycliffeassociates.trConverter;
+package bible.translationtools.converterlib;
 
+import bible.translationtools.recorderapp.wav.WavFile;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.wycliffeassociates.translationrecorder.wav.WavFile;
-import org.wycliffeassociates.translationrecorder.wav.WavMetadata;
+import bible.translationtools.recorderapp.wav.WavMetadata;
 
 import java.io.BufferedWriter;
 import java.io.File;
