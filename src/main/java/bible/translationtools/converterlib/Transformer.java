@@ -77,6 +77,11 @@ public class Transformer implements ITransformer {
     public Integer execute() {
         if(!this.rootDir.exists()) return -1;
 
+        if(this.langSlug == null && this.version == null) {
+            System.out.println("Transformation complete: Nothing has been changed.");
+            return 0;
+        }
+
         this.createBackup();
 
         if(!this.backupCreated) return -1;
