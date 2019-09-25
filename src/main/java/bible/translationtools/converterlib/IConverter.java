@@ -6,7 +6,7 @@ public interface IConverter extends IExecutor {
     Integer execute();
     void analyze();
     void getModeFromUser();
-    List<Mode> getModes();
-    void setModes(List<Mode> modes);
+    List<Project> getProjects();
+    void setProjects(List<Project> projects);
     void setDateTimeDir();
 }
