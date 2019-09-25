@@ -9,18 +9,16 @@ import bible.translationtools.recorderapp.filespage.FileNameExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * This class is to convert takes from old version of translationRecorder
- * to new. Provide at least -t parameter with a directory
- * that contains TranslationRecorder directory as a child
+ * This class is to convert takes from old version of "Recorder"
+ * to new. Provide -d parameter with a directory
+ * that has audio files
  */
 public class Converter implements IConverter {
 
-    private List<Mode> modes = new ArrayList<>();
+    private List<Project> projects = new ArrayList<>();
 
     Scanner reader = new Scanner(System.in);
     String rootPath;
@@ -48,57 +46,57 @@ public class Converter implements IConverter {
 
         int counter = 0;
 
-        Collection<File> takes = FileUtils.listFiles(this.rootDir, null, true);
-        for (File take: takes) {
-            if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
-                    FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
-                    !take.getName().equals("chapter.wav")) {
+        for(Project p: projects) {
+            if(p.pending) {
+                File projectDir = new File(Utils.strJoin(new String[] {
+                        this.rootDir.getAbsolutePath(),
+                        p.language,
+                        p.version,
+                        p.book
+                }, File.separator));
 
-                String[] parts = take.getName().split("_");
-                String lang = parts.length > 0 ? parts[0] : "";
-                String version = parts.length > 1 ? parts[1] : "";
-                String book = parts.length > 2
-                        ? (parts[2].startsWith("b") && parts.length > 3
-                        ? parts[3] : parts[2]) : "";
+                Collection<File> takes = FileUtils.listFiles(projectDir, null, true);
+                for (File take: takes) {
+                    if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
+                            FilenameUtils.getExtension(take.getName()).equals("WAV")) &&
+                            !take.getName().equals("chapter.wav")) {
 
-                if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
-                    Mode bookMode = this.getMode(lang, version, book);
-                    if(bookMode == null) continue;
+                        String mode = p.mode;
 
-                    String mode = bookMode.mode;
+                        WavFile wf = new WavFile(take);
+                        WavMetadata wmd = wf.getMetadata();
+                        FileNameExtractor fne = new FileNameExtractor(take);
 
-                    WavFile wf = new WavFile(take);
-                    WavMetadata wmd = wf.getMetadata();
-                    FileNameExtractor fne = new FileNameExtractor(take);
-
-                    if(fne.matched())
-                    {
-                        this.updateMetadata(wmd, fne, mode);
-                        wf.commit();
-
-                        // Rename file if it was created prior to version.8.5
-                        if(fne.version84())
+                        if(fne.matched())
                         {
-                            String newName = take.getParent() + File.separator;
-                            newName += wmd.getLanguage()
-                                    + "_" + wmd.getVersion()
-                                    + "_b" + wmd.getBookNumber()
-                                    + "_" + wmd.getSlug()
-                                    + "_c" + wmd.getChapter()
-                                    + "_v" + wmd.getStartVerse()
-                                    + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
-                                    + "_t" + String.format("%02d", fne.getTake())
-                                    + ".wav";
+                            this.updateMetadata(wmd, fne, mode);
+                            wf.commit();
 
-                            File newFile = new File(newName);
-                            take.renameTo(newFile);
+                            // Rename file if it was created prior to version.8.5
+                            if(fne.version84())
+                            {
+                                String newName = take.getParent() + File.separator;
+                                newName += wmd.getLanguage()
+                                        + "_" + wmd.getVersion()
+                                        + "_b" + wmd.getBookNumber()
+                                        + "_" + wmd.getSlug()
+                                        + "_c" + wmd.getChapter()
+                                        + "_v" + wmd.getStartVerse()
+                                        + (mode.equals("chunk") ? "-" + wmd.getEndVerse() : "")
+                                        + "_t" + String.format("%02d", fne.getTake())
+                                        + ".wav";
+
+                                File newFile = new File(newName);
+                                take.renameTo(newFile);
+                            }
+
+                            counter++;
                         }
 
-                        counter++;
+                        System.out.println(take.getName());
                     }
-
-                    System.out.println(take.getName());
                 }
+                p.pending = false;
             }
         }
 
@@ -125,8 +123,10 @@ public class Converter implements IConverter {
                         ? parts[3] : parts[2]) : "";
 
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
-                    if (this.getMode(lang, version, book) == null) {
-                        this.modes.add(new Mode(this.detectMode(take), lang, version, book));
+                    if (this.getProject(lang, version, book) == null) {
+                        String mode = this.detectMode(take);
+                        boolean shouldUpdate = this.hasBadMetadata(take);
+                        this.projects.add(new Project(mode, lang, version, book, shouldUpdate));
                     }
                 }
             }
@@ -135,16 +135,20 @@ public class Converter implements IConverter {
 
     @Override
     public void getModeFromUser() {
-        for(Mode m: this.modes) {
+        for(Project p: this.projects) {
             Boolean modeSet = false;
             while (!modeSet) {
-                System.out.println("Select mode for \"" + m + "\". " +
-                        (!m.mode.isEmpty() ? "Current mode: " + m.mode : ""));
+                System.out.println("Select mode for \"" + p + "\". " +
+                        (!p.mode.isEmpty() ? "Current mode: " + p.mode : ""));
                 System.out.println("(1 - verse, 2 - chunk): ");
                 int input = this.reader.nextInt();
-                m.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+                String previousMode = p.mode;
+                p.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+                if(!p.mode.equals(previousMode)) {
+                    p.pending = true;
+                }
 
-                if(!m.mode.isEmpty()) modeSet = true;
+                if(!p.mode.isEmpty()) modeSet = true;
             }
         }
 
@@ -152,18 +156,18 @@ public class Converter implements IConverter {
     }
 
     @Override
-    public List<Mode> getModes() {
-        return this.modes;
+    public List<Project> getProjects() {
+        return this.projects;
     }
 
     @Override
-    public void setModes(List<Mode> modes) {
-        this.modes = modes;
+    public void setProjects(List<Project> projects) {
+        this.projects = projects;
     }
 
     @Override
     public void setDateTimeDir() {
-        String dt = this.getDateTimeStr();
+        String dt = Utils.getDateTimeStr();
         this.dateTimeDir = new File(this.archiveDir + File.separator + dt);
     }
 
@@ -184,21 +188,37 @@ public class Converter implements IConverter {
 
         if(this.rootDir.exists())
         {
-            File[] projects = rootDir.listFiles();
-
-            // Copy project folder to Archive folder
             try {
-                for(File project: projects) {
-                    if(project.isDirectory())
-                    {
-                        FileUtils.copyDirectoryToDirectory(project, this.dateTimeDir);
+                for (Project p : projects) {
+                    if (p.pending) {
+                        File projectDir = new File(Utils.strJoin(new String[] {
+                                this.rootDir.getAbsolutePath(),
+                                p.language,
+                                p.version,
+                                p.book
+                        }, File.separator));
+
+                        File projectDirArchive = new File(Utils.strJoin(new String[] {
+                                this.dateTimeDir.getAbsolutePath(),
+                                p.language,
+                                p.version,
+                                p.book
+                        }, File.separator));
+
+
+                        for(File child: projectDir.listFiles()) {
+                            if(child.isDirectory())
+                            {
+                                FileUtils.copyDirectoryToDirectory(child, projectDirArchive);
+                            }
+                            else
+                            {
+                                FileUtils.copyFileToDirectory(child, projectDirArchive);
+                            }
+                        }
                     }
-                    else
-                    {
-                        FileUtils.copyFileToDirectory(project, this.dateTimeDir);
-                    }
-                    this.backupCreated = true;
                 }
+                this.backupCreated = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -279,8 +299,8 @@ public class Converter implements IConverter {
         String evStr = FileNameExtractor.unitIntToString(ev);
         wmd.setEndVerse(evStr);
 
-        // Update verse markers if mode is "verse"
-        if(mode == "verse" && wmd.getCuePoints().isEmpty()) {
+        // Update verse markers <stikethrough>if mode is "verse"<stikethrough>
+        if(/*mode == "verse" && */wmd.getCuePoints().isEmpty()) {
             int startv = Integer.parseInt(wmd.getStartVerse());
             wmd.addCue(new WavCue(String.valueOf(startv), 0));
         }
@@ -304,16 +324,61 @@ public class Converter implements IConverter {
         return mode;
     }
 
-    private String getDateTimeStr() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        Date date = new Date();
-        return dateFormat.format(date);
+    private boolean hasBadMetadata(File file) {
+        if(!file.isDirectory() && !file.getName().equals("chapter.wav")) {
+            WavFile wf = new WavFile(file);
+            WavMetadata wmd = wf.getMetadata();
+
+            if(wmd.getLanguage().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getAnthology().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getVersion().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getSlug().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getBookNumber().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getModeSlug().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getChapter().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getStartVerse().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getEndVerse().isEmpty()) {
+                return true;
+            }
+
+            if(wmd.getCuePoints().isEmpty()) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+
+        return false;
     }
 
-    private Mode getMode(String language, String version, String book) {
-        for (Mode m: this.modes) {
-            if (m.language.equals(language) && m.version.equals(version) && m.book.equals(book)) {
-                return m;
+    private Project getProject(String language, String version, String book) {
+        for (Project p: this.projects) {
+            if (p.language.equals(language) && p.version.equals(version) && p.book.equals(book)) {
+                return p;
             }
         }
 

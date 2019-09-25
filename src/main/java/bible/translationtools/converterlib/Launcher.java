@@ -9,7 +9,9 @@ public class Launcher {
 
         boolean isTransformer = params.get("t") != null ? true : false;
         String rootFolder = params.get("d") != null ? params.get("d") : ".";
-        String project = params.get("p");
+        String projectLang = params.get("pl");
+        String projectVersion = params.get("pv");
+        String projectBook = params.get("pb");
         String version = params.get("v");
         String langSlug = params.get("lc");
         String langName = params.get("ln") != null ? params.get("ln") : "Unknown";
@@ -17,7 +19,9 @@ public class Launcher {
         try {
             if(isTransformer) {
                 IExecutor transformer = new Transformer(rootFolder,
-                        project,
+                        projectLang,
+                        projectVersion,
+                        projectBook,
                         langSlug,
                         langName,
                         version);
