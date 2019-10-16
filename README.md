@@ -13,11 +13,11 @@ Open a terminal and run the commands:
 *a) When you want to convert the old version files to be compatible with the latest version of BTT Recorder*  
 *b) When you want to set or update the mode (verse/chunk) of the project files*
 
-    java -jar tRConverter.jar -d <PATH>
+    java -jar bttConverter.jar -d <PATH>
 
 **example:**
 
-    java -jar tRConverter.jar -d C\Users\User\Desktop\Projects
+    java -jar bttConverter.jar -d C\Users\User\Desktop\Projects
 
 The command line will offer you to set/change the mode for every book found. Press 1 to set mode as Verse, 2 - for Chunk. If it shows "Current mode" and you want to leave it without changing it, just confirm by pressing 1 or 2 accordingly.
 
@@ -31,16 +31,16 @@ The command line will offer you to set/change the mode for every book found. Pre
 *-ln LANGUAGE_NAME* - original language name (optional). It's used for TranslationExchange transferred projects  
 *-v VERSION* - resource type (version) code to change to. For example: ulb, udb, reg. If omitted, won't be changed   
 
-    java -jar tRConverter.jar -t -d <PATH> -pl <PROJECT_LANGUAGE> -pv <PROJECT_VERSION> -pb <PROJECT_BOOK> -lc <LANGUAGE_CODE> -ln <LANGUAGE_NAME> -v <VERSION>
+    java -jar bttConverter.jar -t -d <PATH> -pl <PROJECT_LANGUAGE> -pv <PROJECT_VERSION> -pb <PROJECT_BOOK> -lc <LANGUAGE_CODE> -ln <LANGUAGE_NAME> -v <VERSION>
 
 **NOTICE**: Add parameter -t in the command to transform
 
 **example:**
 
-    java -jar tRConverter.jar -t -d C\Users\User\Desktop\Projects -pl ua -pv ulb -lc ru
+    java -jar bttConverter.jar -t -d C\Users\User\Desktop\Projects -pl ua -pv ulb -lc ru
 This will change the language of the Ukrainian ULB (ua) project (all books) to Russian
 
-    java -jar tRConverter.jar -t -d C\Users\User\Desktop\Projects -pl pt-br -pv ulb -pb mrk -lc es -v reg
+    java -jar bttConverter.jar -t -d C\Users\User\Desktop\Projects -pl pt-br -pv ulb -pb mrk -lc es -v reg
 
 This will change the language of the Brazilian project, book of Mark to Spanish and the resource type to REG
 
