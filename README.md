@@ -1,5 +1,5 @@
-# BTT Converter
-btt Converter
+# BTT Converter  
+Converter app for BTT Recorder  
 
 # Requirements
 Java installed
