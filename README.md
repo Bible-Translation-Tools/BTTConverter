@@ -37,7 +37,7 @@ The command line will offer you to set/change the mode for every book found. Pre
 
 **example:**
 
-    java -jar tRConverter.jar -t -d C\Users\User\Desktop\Projects -pl ua -pv ulb -lc ru
+    java -jar bttConverter.jar -t -d C\Users\User\Desktop\Projects -pl ua -pv ulb -lc ru
 This will change the language of the Ukrainian ULB (ua) project (all books) to Russian
 
     java -jar bttConverter.jar -t -d C\Users\User\Desktop\Projects -pl pt-br -pv ulb -pb mrk -lc es -v reg
