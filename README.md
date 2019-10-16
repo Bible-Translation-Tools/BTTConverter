@@ -1,5 +1,5 @@
-# BTT Recorder Converter
-bttRecorder Converter
+# BTT Converter
+btt Converter
 
 # Requirements
 Java installed
