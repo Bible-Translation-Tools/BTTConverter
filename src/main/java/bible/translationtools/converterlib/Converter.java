@@ -21,19 +21,15 @@ public class Converter implements IConverter {
     private List<Project> projects = new ArrayList<>();
 
     Scanner reader = new Scanner(System.in);
-    String rootPath;
-    String archivePath;
     File rootDir;
     File archiveDir;
     File dateTimeDir;
     boolean backupCreated;
 
     public Converter(String rootPath) throws Exception {
-        this.rootPath = rootPath;
-        this.archivePath = rootPath + "Archive";
-
-        this.rootDir = new File(this.rootPath);
-        this.archiveDir = new File(this.archivePath);
+        rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
+        this.rootDir = new File(rootPath);
+        this.archiveDir = new File(rootPath + "Archive");
 
         this.setDateTimeDir();
     }
