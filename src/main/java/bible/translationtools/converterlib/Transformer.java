@@ -7,40 +7,36 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import bible.translationtools.recorderapp.wav.WavMetadata;
 
-import javax.rmi.CORBA.Util;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 
 /**
  * This class is to change language and version of the takes
  * Parameters to specify:
  * -t (no value needed. It means that app will transform takes)
  * -d path (Path to a directory with takes to transform)
- * -pl Source project language code (language code: en, ru, es, etc...)
- * -pv Source project version (version slug: ulb, udb, reg, v4)
- * -pb Source project book (book slug: gen, mrk, jas, etc...)
- * -lc language code (language slug to change to: en, ru, es, etc...)
- * -ln language name (original language name: English, Русский, Español, etc...)
- * -v version (version to change to: ulb, udb, reg, v4)
+ * -pl Source language (language slug: en, ru, es, etc...)
+ * -pv Source version (version slug: ulb, udb, reg, v4)
+ * -pb Source book (book slug: gen, mrk, jas, etc...)
+ * -lc target language (language slug: en, ru, es, etc...)
+ * -ln target language name (language name: English, Русский, Español, etc...)
+ * -v target version (version slug: ulb, udb, reg, v4)
  */
 public class Transformer implements ITransformer {
 
-    String langDir;
-    String versionDir;
-    String bookDir;
+    String sourceLanguage;
+    String sourceVersion;
+    String sourceBook;
 
-    String langSlug;
-    String langName;
-    String version;
+    String targetLanguage;
+    String targetLanguageName;
+    String targetVersion;
 
-    String originalLang;
+    String originalLanguage;
     String originalVersion;
 
     String rootPath;
@@ -55,37 +51,39 @@ public class Transformer implements ITransformer {
     /**
      * Constructor
      * @param rootPath root directory path
-     * @param langDir language directory
-     * @param versionDir version directory
-     * @param bookDir book directory | if not provided, all the books will be transformed
-     * @param langSlug Project language code to change to
-     * @param langName Language original name
-     * @param version Project version to change to
+     * @param sourceLanguage Source language slug
+     * @param sourceVersion Source version slug
+     * @param sourceBook Source book slug | if null, all the books will be transformed
+     * @param targetLanguage Target language slug
+     * @param targetLanguageName Target language name | set it null if not used for BTT Exchanger
+     * @param targetVersion Target version slug
      * @throws Exception
      */
-    public Transformer(String rootPath, String langDir, String versionDir, String bookDir,
-                       String langSlug, String langName, String version) throws Exception {
+    public Transformer(String rootPath, String sourceLanguage, String sourceVersion, String sourceBook,
+                       String targetLanguage, String targetLanguageName, String targetVersion) throws Exception {
         this.rootPath = rootPath;
         this.archivePath = this.rootPath + "Archive";
 
-        if(langDir == null || versionDir == null) {
-            throw new InvalidParameterException("Please specify the project language and version, using parameters -pl and -pv");
+        if(sourceLanguage == null || sourceVersion == null) {
+            throw new InvalidParameterException(
+                    "Please specify the project language and version, using parameters -pl and -pv"
+            );
         }
 
-        this.langDir = langDir;
-        this.langSlug = langSlug;
-        this.langName = langName;
-        this.version = version;
-        this.versionDir = versionDir;
-        this.bookDir = bookDir;
+        this.sourceLanguage = sourceLanguage;
+        this.targetLanguage = targetLanguage;
+        this.targetLanguageName = targetLanguageName;
+        this.sourceVersion = sourceVersion;
+        this.targetVersion = targetVersion;
+        this.sourceBook = sourceBook;
 
         this.rootDir = new File(this.rootPath);
         this.archiveDir = new File(this.archivePath);
         this.projectDir = new File(Utils.strJoin(new String[] {
                 this.rootDir.getAbsolutePath(),
-                this.langDir,
-                this.versionDir,
-                (this.bookDir != null ? this.bookDir : "")
+                this.sourceLanguage,
+                this.sourceVersion,
+                (this.sourceBook != null ? this.sourceBook : "")
         }, File.separator));
 
         this.setDateTimeDir();
@@ -96,7 +94,7 @@ public class Transformer implements ITransformer {
     public Integer execute() {
         if(!this.rootDir.exists()) return -1;
 
-        if(this.langSlug == null && this.version == null) {
+        if(this.targetLanguage == null && this.targetVersion == null) {
             System.out.println("Nothing has been pending.");
             return 0;
         }
@@ -122,9 +120,9 @@ public class Transformer implements ITransformer {
     private void setProjectArchiveDir() {
         this.projectArchiveDir = new File(Utils.strJoin(new String[] {
                 this.dateTimeDir.getAbsolutePath(),
-                this.langDir,
-                this.versionDir,
-                (this.bookDir != null ? this.bookDir : "")
+                this.sourceLanguage,
+                this.sourceVersion,
+                (this.sourceBook != null ? this.sourceBook : "")
         }, File.separator));
     }
 
@@ -199,14 +197,14 @@ public class Transformer implements ITransformer {
             JSONObject version = projectManifest.getJSONObject("version");
             JSONArray chapters = projectManifest.getJSONArray("manifest");
 
-            if(this.langSlug != null) {
-                language.put("slug", this.langSlug);
-                language.put("name", this.langName);
+            if(this.targetLanguage != null) {
+                language.put("slug", this.targetLanguage);
+                language.put("name", this.targetLanguageName);
                 projectManifest.put("language", language);
             }
-            if(this.version != null) {
-                version.put("slug", this.version);
-                version.put("name", Utils.getVersionName(this.version));
+            if(this.targetVersion != null) {
+                version.put("slug", this.targetVersion);
+                version.put("name", Utils.getVersionName(this.targetVersion));
                 projectManifest.put("version", version);
             }
 
@@ -257,14 +255,14 @@ public class Transformer implements ITransformer {
             WavMetadata wmd = wf.getMetadata();
             String parentDir = takeFile.getParent();
 
-            this.originalLang = wmd.getLanguage();
+            this.originalLanguage = wmd.getLanguage();
             this.originalVersion = wmd.getVersion();
 
-            if(this.langSlug != null) {
-                wmd.setLanguage(this.langSlug);
+            if(this.targetLanguage != null) {
+                wmd.setLanguage(this.targetLanguage);
             }
-            if(this.version != null) {
-                wmd.setVersion(this.version);
+            if(this.targetVersion != null) {
+                wmd.setVersion(this.targetVersion);
             }
             wf.commit();
 
@@ -283,9 +281,9 @@ public class Transformer implements ITransformer {
         try {
             File target = new File(Utils.strJoin(new String[] {
                     this.rootDir.getAbsolutePath(),
-                    (this.langSlug != null ? this.langSlug : this.originalLang),
-                    this.version != null ? this.version : this.originalVersion,
-                    (this.bookDir != null ? this.bookDir : "")
+                    (this.targetLanguage != null ? this.targetLanguage : this.originalLanguage),
+                    this.targetVersion != null ? this.targetVersion : this.originalVersion,
+                    (this.sourceBook != null ? this.sourceBook : "")
             }, File.separator));
 
             FileUtils.copyDirectory(this.projectDir, target);
