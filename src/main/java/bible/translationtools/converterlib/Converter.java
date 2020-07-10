@@ -43,7 +43,7 @@ public class Converter implements IConverter {
         int counter = 0;
 
         for(Project p: projects) {
-            if(p.pending) {
+            if(p.shouldFix || p.shouldUpdate) {
                 File projectDir = new File(Utils.strJoin(new String[] {
                         this.rootDir.getAbsolutePath(),
                         p.language,
@@ -92,7 +92,8 @@ public class Converter implements IConverter {
                         System.out.println(take.getName());
                     }
                 }
-                p.pending = false;
+                p.shouldFix = false;
+                p.shouldUpdate = false;
             }
         }
 
@@ -121,8 +122,17 @@ public class Converter implements IConverter {
                 if (!lang.isEmpty() && !version.isEmpty() && !book.isEmpty()) {
                     if (this.getProject(lang, version, book) == null) {
                         String mode = this.detectMode(take);
-                        boolean shouldUpdate = this.hasBadMetadata(take);
-                        this.projects.add(new Project(mode, lang, version, book, shouldUpdate));
+                        boolean shouldFix = this.hasBadMetadata(take);
+                        this.projects.add(
+                                new Project(
+                                        mode,
+                                        lang,
+                                        version,
+                                        book,
+                                        shouldFix,
+                                        false
+                                )
+                        );
                     }
                 }
             }
@@ -141,7 +151,7 @@ public class Converter implements IConverter {
                 String previousMode = p.mode;
                 p.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
                 if(!p.mode.equals(previousMode)) {
-                    p.pending = true;
+                    p.shouldUpdate = true;
                 }
 
                 if(!p.mode.isEmpty()) modeSet = true;
@@ -186,7 +196,7 @@ public class Converter implements IConverter {
         {
             try {
                 for (Project p : projects) {
-                    if (p.pending) {
+                    if (p.shouldFix || p.shouldUpdate) {
                         File projectDir = new File(Utils.strJoin(new String[] {
                                 this.rootDir.getAbsolutePath(),
                                 p.language,

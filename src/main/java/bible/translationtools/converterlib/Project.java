@@ -5,14 +5,23 @@ public class Project {
     public String language;
     public String version;
     public String book;
-    public boolean pending;
+    public boolean shouldFix;
+    public boolean shouldUpdate;
 
-    public Project(String mode, String language, String version, String book, boolean pending) {
+    public Project(
+            String mode,
+            String language,
+            String version,
+            String book,
+            boolean shouldFix,
+            boolean shouldUpdate
+    ) {
         this.mode = mode;
         this.language = language;
         this.version = version;
         this.book = book;
-        this.pending = pending;
+        this.shouldFix = shouldFix;
+        this.shouldUpdate = shouldUpdate;
     }
 
     @Override
