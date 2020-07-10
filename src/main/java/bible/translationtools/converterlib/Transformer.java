@@ -39,8 +39,6 @@ public class Transformer implements ITransformer {
     String originalLanguage;
     String originalVersion;
 
-    String rootPath;
-    String archivePath;
     File rootDir;
     File archiveDir;
     File projectDir;
@@ -61,8 +59,7 @@ public class Transformer implements ITransformer {
      */
     public Transformer(String rootPath, String sourceLanguage, String sourceVersion, String sourceBook,
                        String targetLanguage, String targetLanguageName, String targetVersion) throws Exception {
-        this.rootPath = rootPath;
-        this.archivePath = this.rootPath + "Archive";
+        rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
 
         if(sourceLanguage == null || sourceVersion == null) {
             throw new InvalidParameterException(
@@ -77,8 +74,8 @@ public class Transformer implements ITransformer {
         this.targetVersion = targetVersion;
         this.sourceBook = sourceBook;
 
-        this.rootDir = new File(this.rootPath);
-        this.archiveDir = new File(this.archivePath);
+        this.rootDir = new File(rootPath);
+        this.archiveDir = new File(rootPath + "Archive");
         this.projectDir = new File(Utils.strJoin(new String[] {
                 this.rootDir.getAbsolutePath(),
                 this.sourceLanguage,
