@@ -5,7 +5,7 @@ import java.util.List;
 public interface IConverter extends IExecutor {
     Integer execute();
     void analyze();
-    void getModeFromUser();
+    void setMode(Mode mode);
     List<Project> getProjects();
     void setProjects(List<Project> projects);
     void setDateTimeDir();

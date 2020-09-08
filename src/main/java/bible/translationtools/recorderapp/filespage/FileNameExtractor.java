@@ -81,28 +81,31 @@ public class FileNameExtractor {
     private void extractData(String file){
         if(!mVersion84)
         {
-            String UNDERSCORE = "_";
-            String LANGUAGE = "([a-zA-Z]{2,3}[-[\\d\\w]+]*)";
-            String PROJECT = "(([a-zA-Z]{3})_b([\\d]{2})_([1-3]*[a-zA-Z]+)|obs)";
-            String CHAPTER = "c([\\d]{2,3})";
-            String VERSE = "v([\\d]{2,3})(-([\\d]{2,3}))?";
-            String TAKE = "(_t([\\d]{2}))?";
-            String FILENAME_PATTERN = LANGUAGE + UNDERSCORE + PROJECT + UNDERSCORE + CHAPTER +
-                    UNDERSCORE + VERSE + TAKE + ".*";
+            String LANGUAGE = "([a-zA-Z]{2,3}[-a-zA-Z]*?)";
+            String ANTHOLOGY = "(?:_(?:nt|ot))?";
+            String RESOURCE_TYPE = "(?:_([a-zA-Z]{3}))";
+            String BOOK = "(?:_b([\\d]{2}))?(?:_([1-3]?[a-zA-Z]{2,3}))??";
+            String CHAPTER = "(?:_c([\\d]{1,3}))?";
+            String VERSE = "(?:_v([\\d]{1,3})(?:-([\\d]{1,3}))?)?";
+            String TAKE = "(?:_t([\\d]{1,2}))?";
+            String FILENAME_PATTERN = "^" + LANGUAGE + ANTHOLOGY + RESOURCE_TYPE + BOOK + CHAPTER +
+                    VERSE + TAKE + "$";
             Pattern p = Pattern.compile(FILENAME_PATTERN);
-            Matcher m = p.matcher(file);
+            Matcher m = p.matcher(getNameWithoutExtention(file));
             boolean found = m.find();
 
             if(found){
                 mLang = m.group(1);
-                mProject = m.group(2);
-                mSource = m.group(3);
-                mBookNum = (m.group(4) != null)? Integer.parseInt(m.group(4)) : -1;
-                mBook = m.group(5);
-                mChap = Integer.parseInt(m.group(6));
-                mStartVerse = Integer.parseInt(m.group(7));
-                mEndVerse = (m.group(9) != null)? Integer.parseInt(m.group(9)) : -1;
-                mTake = (m.group(11) != null)? Integer.parseInt(m.group(11)) : 0;
+                mProject = m.group(2) +
+                        (m.group(3) != null ? "_" + m.group(3) : "") +
+                        "_" + m.group(4);
+                mSource = m.group(2);
+                mBookNum = m.group(3) != null ? Integer.parseInt(m.group(3)) : -1;
+                mBook = m.group(4);
+                mChap = Integer.parseInt(m.group(5));
+                mStartVerse = m.group(6) != null ? Integer.parseInt(m.group(6)) : -1;
+                mEndVerse = m.group(7) != null ? Integer.parseInt(m.group(7)) : -1;
+                mTake = m.group(8) != null ? Integer.parseInt(m.group(8)) : 0;
                 mMatched = true;
             } else {
                 mMatched = false;
@@ -223,6 +226,13 @@ public class FileNameExtractor {
             name = name.replace(".wav", "");
         }
         return name;
+    }
+
+    public static String getNameWithoutExtention(String filename){
+        if(filename.contains(".wav")){
+            filename = filename.replace(".wav", "");
+        }
+        return filename;
     }
 
     public static int getLargestTake(File directory, File filename){

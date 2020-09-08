@@ -55,4 +55,10 @@ public class ChunksParser {
 
         return chkLastVs;
     }
+
+    public int GetChapterLastVerse() {
+        JSONObject lastChunk = arrayOfChunks.getJSONObject(arrayOfChunks.length() - 1);
+        String lastVs = lastChunk.getString("lastvs");
+        return Integer.parseInt(lastVs);
+    }
 }

@@ -1,67 +1,70 @@
 package bible.translationtools.converterlib;
 
-import java.util.HashMap;
-import java.util.Map;
+import picocli.CommandLine;
 
-public class Launcher {
-    public static void main(String[] args) {
-        final Map<String, String> params = parseParams(args);
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
-        boolean isTransformer = params.get("t") != null ? true : false;
-        String rootFolder = params.get("d") != null ? params.get("d") : ".";
-        String projectLang = params.get("pl");
-        String projectVersion = params.get("pv");
-        String projectBook = params.get("pb");
-        String version = params.get("v");
-        String langSlug = params.get("lc");
-        String langName = params.get("ln") != null ? params.get("ln") : "Unknown";
+public class Launcher implements Runnable {
+    private final Logger logger = Logger.getLogger(Launcher.class.getName());
 
+    @CommandLine.Option(names = "-t", description = "If you want to change the language of the project files and/or resource type")
+    private boolean isTransformer;
+
+    @CommandLine.Option(names = "-d", description = "A destination directory with audio projects")
+    private String destination;
+
+    @CommandLine.Option(names = "-pl", description = "Source project language directory name")
+    private String projectLang;
+
+    @CommandLine.Option(names = "-pv", description = "Source project version directory name")
+    private String projectVersion;
+
+    @CommandLine.Option(names = "-pb", description = "Source project book directory name")
+    private String projectBook;
+
+    @CommandLine.Option(names = "-v", description = "Resource type (version) code to change to")
+    private String version;
+
+    @CommandLine.Option(names = "-lc", description = "Language code to change to")
+    private String languageCode;
+
+    @CommandLine.Option(names = "-ln", description = "Original language name. Optional")
+    private String languageName;
+
+    @CommandLine.Option(names = "-m", description = "Mode (verse or chunk). Optional")
+    private Mode mode;
+
+    @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help")
+    private boolean helpRequested = false;
+
+    private void execute() {
         try {
+            if (destination == null) throw new IllegalArgumentException("You must specify destination directory");
+
             if(isTransformer) {
-                IExecutor transformer = new Transformer(rootFolder,
+                IExecutor transformer = new Transformer(destination,
                         projectLang,
                         projectVersion,
                         projectBook,
-                        langSlug,
-                        langName,
+                        languageCode,
+                        languageName,
                         version);
                 transformer.execute();
             } else {
-                IConverter converter = new Converter(rootFolder);
+                IConverter converter = new Converter(destination);
                 converter.analyze();
-                converter.getModeFromUser();
+                converter.setMode(mode);
                 converter.execute();
             }
         } catch (Exception e) {
             e.printStackTrace();
+            logger.log(Level.WARNING, e.getMessage());
         }
     }
 
-    private static Map<String, String> parseParams(String[] args) {
-        final Map<String, String> params = new HashMap<>();
-
-        String param = null;
-        for (int i = 0; i < args.length; i++) {
-            final String a = args[i];
-
-            if (a.charAt(0) == '-') {
-                if (a.length() < 2) {
-                    System.err.println("Error at argument " + a);
-                    return new HashMap<>();
-                }
-
-                param = a.substring(1);
-                params.put(param, "");
-            }
-            else if (params.get(param) == "") {
-                params.put(param, a);
-            }
-            else {
-                System.err.println("Illegal parameter usage");
-                return new HashMap<>();
-            }
-        }
-
-        return params;
+    @Override
+    public void run() {
+        execute();
     }
 }
