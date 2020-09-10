@@ -11,8 +11,11 @@ public class Launcher implements Runnable {
     @CommandLine.Option(names = "-t", description = "If you want to change the language of the project files and/or resource type")
     private boolean isTransformer;
 
-    @CommandLine.Option(names = "-d", description = "A destination directory with audio projects")
-    private String destination;
+    @CommandLine.Option(names = "-d", description = "A source directory with audio projects")
+    private String sourceDir;
+
+    @CommandLine.Option(names = "-f", description = "A source file to convert (fix)")
+    private String sourceFile;
 
     @CommandLine.Option(names = "-pl", description = "Source project language directory name")
     private String projectLang;
@@ -40,10 +43,8 @@ public class Launcher implements Runnable {
 
     private void execute() {
         try {
-            if (destination == null) throw new IllegalArgumentException("You must specify destination directory");
-
             if(isTransformer) {
-                IExecutor transformer = new Transformer(destination,
+                IExecutor transformer = new Transformer(sourceDir,
                         projectLang,
                         projectVersion,
                         projectBook,
@@ -51,8 +52,13 @@ public class Launcher implements Runnable {
                         languageName,
                         version);
                 transformer.execute();
+            } else if(sourceFile != null) {
+                IConverter fileConverter = new FileConverter(sourceFile);
+                fileConverter.analyze();
+                fileConverter.setMode(mode);
+                fileConverter.execute();
             } else {
-                IConverter converter = new Converter(destination);
+                IConverter converter = new Converter(sourceDir);
                 converter.analyze();
                 converter.setMode(mode);
                 converter.execute();

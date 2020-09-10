@@ -29,12 +29,14 @@ public class Converter implements IConverter {
     boolean backupCreated;
 
     public Converter(String rootPath) throws Exception {
+        if (rootPath == null) throw new IllegalArgumentException("You must specify source directory");
+
         rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
         this.rootDir = new File(rootPath);
         this.archiveDir = new File(rootPath + "Archive");
 
         if (!this.rootDir.exists()) {
-            throw new IllegalArgumentException("Destination directory doesn't exist.");
+            throw new IllegalArgumentException("Source directory doesn't exist.");
         }
 
         this.setDateTimeDir();
@@ -103,7 +105,7 @@ public class Converter implements IConverter {
             }
         }
 
-        System.out.println("Conversion complete: " + counter + " files have been affected.");
+        System.out.println("Conversion complete: " + counter + " file(s) have been affected.");
         return counter;
     }
 
