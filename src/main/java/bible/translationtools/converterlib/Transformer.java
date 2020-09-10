@@ -59,6 +59,8 @@ public class Transformer implements ITransformer {
      */
     public Transformer(String rootPath, String sourceLanguage, String sourceVersion, String sourceBook,
                        String targetLanguage, String targetLanguageName, String targetVersion) throws Exception {
+        if (rootPath == null) throw new IllegalArgumentException("You must specify source directory");
+
         rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
 
         if(sourceLanguage == null || sourceVersion == null) {
@@ -75,6 +77,11 @@ public class Transformer implements ITransformer {
         this.sourceBook = sourceBook;
 
         this.rootDir = new File(rootPath);
+
+        if (!this.rootDir.exists()) {
+            throw new IllegalArgumentException("Source directory doesn't exist.");
+        }
+
         this.archiveDir = new File(rootPath + "Archive");
         this.projectDir = new File(Utils.strJoin(new String[] {
                 this.rootDir.getAbsolutePath(),
