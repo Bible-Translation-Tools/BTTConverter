@@ -10,6 +10,7 @@ import bible.translationtools.recorderapp.filespage.FileNameExtractor;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.*;
 
 /**
  * This class is to convert takes from old version of "Recorder"
@@ -18,6 +19,7 @@ import java.util.*;
  */
 public class Converter implements IConverter {
 
+    private final Logger logger = Logger.getLogger(Launcher.class.getName());
     private List<Project> projects = new ArrayList<>();
 
     Scanner reader = new Scanner(System.in);
@@ -27,9 +29,15 @@ public class Converter implements IConverter {
     boolean backupCreated;
 
     public Converter(String rootPath) throws Exception {
+        if (rootPath == null) throw new IllegalArgumentException("You must specify source directory");
+
         rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
         this.rootDir = new File(rootPath);
         this.archiveDir = new File(rootPath + "Archive");
+
+        if (!this.rootDir.exists()) {
+            throw new IllegalArgumentException("Source directory doesn't exist.");
+        }
 
         this.setDateTimeDir();
     }
@@ -97,15 +105,13 @@ public class Converter implements IConverter {
             }
         }
 
-        System.out.println("Conversion complete: " + counter + " files have been affected.");
+        System.out.println("Conversion complete: " + counter + " file(s) have been affected.");
         return counter;
     }
 
     @Override
     public void analyze()
     {
-        if(!this.rootDir.exists()) return;
-
         Collection<File> takes = FileUtils.listFiles(this.rootDir, null, true);
         for (File take: takes) {
             if((FilenameUtils.getExtension(take.getName()).equals("wav") ||
@@ -140,16 +146,23 @@ public class Converter implements IConverter {
     }
 
     @Override
-    public void getModeFromUser() {
+    public void setMode(Mode mode) {
         for(Project p: this.projects) {
-            Boolean modeSet = false;
+            boolean modeSet = false;
             while (!modeSet) {
-                System.out.println("Select mode for \"" + p + "\". " +
-                        (!p.mode.isEmpty() ? "Current mode: " + p.mode : ""));
-                System.out.println("(1 - verse, 2 - chunk): ");
-                int input = this.reader.nextInt();
                 String previousMode = p.mode;
-                p.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+
+                if (mode == null) {
+                    System.out.println("Select mode for \"" + p + "\". " +
+                            (!p.mode.isEmpty() ? "Current mode: " + p.mode : ""));
+                    System.out.println("(1 - verse, 2 - chunk): ");
+
+                    int input = this.reader.nextInt();
+                    p.mode = input == 1 ? "verse" : (input == 2 ? "chunk" : "");
+                } else {
+                    p.mode = mode.toString();
+                }
+
                 if(!p.mode.equals(previousMode)) {
                     p.shouldUpdate = true;
                 }
@@ -192,42 +205,43 @@ public class Converter implements IConverter {
             this.dateTimeDir.mkdir();
         }
 
-        if(this.rootDir.exists())
-        {
-            try {
-                for (Project p : projects) {
-                    if (p.shouldFix || p.shouldUpdate) {
-                        File projectDir = new File(Utils.strJoin(new String[] {
-                                this.rootDir.getAbsolutePath(),
-                                p.language,
-                                p.version,
-                                p.book
-                        }, File.separator));
+        try {
+            for (Project p : projects) {
+                if (p.shouldFix || p.shouldUpdate) {
+                    File projectDir = new File(Utils.strJoin(new String[] {
+                            this.rootDir.getAbsolutePath(),
+                            p.language,
+                            p.version,
+                            p.book
+                    }, File.separator));
 
-                        File projectDirArchive = new File(Utils.strJoin(new String[] {
-                                this.dateTimeDir.getAbsolutePath(),
-                                p.language,
-                                p.version,
-                                p.book
-                        }, File.separator));
+                    if (!projectDir.exists()) {
+                        logger.log(Level.WARNING, "Project directory does not exist.");
+                        continue;
+                    }
 
+                    File projectDirArchive = new File(Utils.strJoin(new String[] {
+                            this.dateTimeDir.getAbsolutePath(),
+                            p.language,
+                            p.version,
+                            p.book
+                    }, File.separator));
 
-                        for(File child: projectDir.listFiles()) {
-                            if(child.isDirectory())
-                            {
-                                FileUtils.copyDirectoryToDirectory(child, projectDirArchive);
-                            }
-                            else
-                            {
-                                FileUtils.copyFileToDirectory(child, projectDirArchive);
-                            }
+                    for(File child: projectDir.listFiles()) {
+                        if(child.isDirectory())
+                        {
+                            FileUtils.copyDirectoryToDirectory(child, projectDirArchive);
+                        }
+                        else
+                        {
+                            FileUtils.copyFileToDirectory(child, projectDirArchive);
                         }
                     }
                 }
-                this.backupCreated = true;
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+            this.backupCreated = true;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -276,6 +290,9 @@ public class Converter implements IConverter {
         if(wmd.getStartVerse().isEmpty())
         {
             int sv = fne.getStartVerse();
+            if (sv == -1) {
+                sv = 1;
+            }
             String svStr = FileNameExtractor.unitIntToString(sv);
             wmd.setStartVerse(svStr);
         }
@@ -289,12 +306,16 @@ public class Converter implements IConverter {
                 String ant  = bp.GetAnthology(fne.getBook());
                 String path = "assets/chunks/" + ant + "/" + fne.getBook() + "/chunks.json";
 
-                String cnStr = FileNameExtractor.unitIntToString(fne.getChapter());
-                String svStr = FileNameExtractor.unitIntToString(fne.getStartVerse());
-                String id = cnStr + "-" + svStr;
-
                 ChunksParser chp = new ChunksParser(path);
-                ev = chp.GetLastVerse(id);
+
+                if (fne.getStartVerse() == -1) {
+                    ev = chp.GetChapterLastVerse();
+                } else {
+                    String cnStr = FileNameExtractor.unitIntToString(fne.getChapter());
+                    String svStr = FileNameExtractor.unitIntToString(fne.getStartVerse());
+                    String id = cnStr + "-" + svStr;
+                    ev = chp.GetLastVerse(id);
+                }
             }
             else
             {
@@ -305,8 +326,7 @@ public class Converter implements IConverter {
         String evStr = FileNameExtractor.unitIntToString(ev);
         wmd.setEndVerse(evStr);
 
-        // Update verse markers <stikethrough>if mode is "verse"<stikethrough>
-        if(/*mode == "verse" && */wmd.getCuePoints().isEmpty()) {
+        if(wmd.getCuePoints().isEmpty()) {
             int startv = Integer.parseInt(wmd.getStartVerse());
             wmd.addCue(new WavCue(String.valueOf(startv), 0));
         }
