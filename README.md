@@ -44,3 +44,7 @@ This will change the language of the Ukrainian ULB (ua) project (all books) to R
 
 This will change the language of the Brazilian project, book of Mark to Spanish and the resource type to REG
 
+### Backup
+If you want to backup data prior to conversion/transformation add flag -b
+
+	java -jar bttConverter.jar -b -d <PATH>

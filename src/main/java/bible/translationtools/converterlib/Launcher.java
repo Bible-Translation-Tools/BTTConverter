@@ -38,6 +38,9 @@ public class Launcher implements Runnable {
     @CommandLine.Option(names = "-m", description = "Mode (verse or chunk). Optional")
     private Mode mode;
 
+    @CommandLine.Option(names = "-b", description = "Should create the backup")
+    private boolean shouldBackup;
+
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help")
     private boolean helpRequested = false;
 
@@ -50,7 +53,9 @@ public class Launcher implements Runnable {
                         projectBook,
                         languageCode,
                         languageName,
-                        version);
+                        version,
+                        shouldBackup
+                );
                 transformer.execute();
             } else if(sourceFile != null) {
                 IConverter fileConverter = new FileConverter(sourceFile);
@@ -58,7 +63,7 @@ public class Launcher implements Runnable {
                 fileConverter.setMode(mode);
                 fileConverter.execute();
             } else {
-                IConverter converter = new Converter(sourceDir);
+                IConverter converter = new Converter(sourceDir, shouldBackup);
                 converter.analyze();
                 converter.setMode(mode);
                 converter.execute();

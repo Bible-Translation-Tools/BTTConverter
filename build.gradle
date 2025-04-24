@@ -1,42 +1,68 @@
 plugins {
-    id "java"
+    id "java-library"
+    id "maven-publish"
 }
 
-group 'bttConverter'
-version '0.7.1'
-
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven { url "https://jitpack.io" }
 }
 
 dependencies {
-    implementation 'commons-io:commons-io:2.6'
-    implementation 'org.json:json:20180813'
+    implementation 'commons-io:commons-io:2.14.0'
+    implementation 'org.json:json:20231013'
     implementation "info.picocli:picocli:4.5.1"
     annotationProcessor 'info.picocli:picocli-codegen:4.5.1'
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.1'
 }
 
 compileJava {
     options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
-jar {
-    archiveName = 'bttConverter.jar'
-    manifest {
-        attributes (
-                "Class-Path": configurations.compile.collect { it.getName() }.join(" "),
-                'Main-Class' : "bible.translationtools.converterlib.Main"
-        )
-    }
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
 
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+            groupId = 'org.bibletranslationtools'
+            artifactId = 'bttr-converter'
+            version = '0.7.2'
+
+            pom {
+                name = 'BTTR Converter'
+                description = 'Converter app for BTT Recorder'
+                url = "https://github.com/Bible-Translation-Tools/BTTConverter"
+                licenses {
+                    license {
+                        name = "GNU GENERAL PUBLIC LICENSE, Version 2.0"
+                        url = "http://www.gnu.org/licenses/gpl-2.0.en.html"
+                        distribution = "repo"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "Bible-Translation-Tools"
+                        name = "Bible Translation Tools"
+                        url = "https://github.com/Bible-Translation-Tools"
+                    }
+                }
+                scm {
+                    url = "https://github.com/Bible-Translation-Tools/BTTConverter"
+                    connection = "scm:git:git://github.com/Bible-Translation-Tools/BTTConverter.git"
+                    developerConnection = "scm:git:ssh://git@github.com/Bible-Translation-Tools/BTTConverter.git"
+                }
+                issueManagement {
+                    url = "https://github.com/Bible-Translation-Tools/BTTConverter/issues"
+                    system = "github"
+                }
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
     }
 }

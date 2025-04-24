@@ -45,25 +45,35 @@ public class Transformer implements ITransformer {
     File dateTimeDir;
     File projectArchiveDir;
     boolean backupCreated;
+    boolean shouldBackup;
 
     /**
      * Constructor
-     * @param rootPath root directory path
-     * @param sourceLanguage Source language slug
-     * @param sourceVersion Source version slug
-     * @param sourceBook Source book slug | if null, all the books will be transformed
-     * @param targetLanguage Target language slug
+     *
+     * @param rootPath           root directory path
+     * @param sourceLanguage     Source language slug
+     * @param sourceVersion      Source version slug
+     * @param sourceBook         Source book slug | if null, all the books will be transformed
+     * @param targetLanguage     Target language slug
      * @param targetLanguageName Target language name | set it null if not used for BTT Exchanger
-     * @param targetVersion Target version slug
+     * @param targetVersion      Target version slug
      * @throws Exception
      */
-    public Transformer(String rootPath, String sourceLanguage, String sourceVersion, String sourceBook,
-                       String targetLanguage, String targetLanguageName, String targetVersion) throws Exception {
+    public Transformer(
+            String rootPath,
+            String sourceLanguage,
+            String sourceVersion,
+            String sourceBook,
+            String targetLanguage,
+            String targetLanguageName,
+            String targetVersion,
+            boolean shouldBackup
+    ) throws Exception {
         if (rootPath == null) throw new IllegalArgumentException("You must specify source directory");
 
         rootPath = rootPath.replaceFirst("/$", ""); // remove trailing slash if exists
 
-        if(sourceLanguage == null || sourceVersion == null) {
+        if (sourceLanguage == null || sourceVersion == null) {
             throw new InvalidParameterException(
                     "Please specify the project language and version, using parameters -pl and -pv"
             );
@@ -75,6 +85,7 @@ public class Transformer implements ITransformer {
         this.sourceVersion = sourceVersion;
         this.targetVersion = targetVersion;
         this.sourceBook = sourceBook;
+        this.shouldBackup = shouldBackup;
 
         this.rootDir = new File(rootPath);
 
@@ -83,7 +94,7 @@ public class Transformer implements ITransformer {
         }
 
         this.archiveDir = new File(rootPath + "Archive");
-        this.projectDir = new File(Utils.strJoin(new String[] {
+        this.projectDir = new File(Utils.strJoin(new String[]{
                 this.rootDir.getAbsolutePath(),
                 this.sourceLanguage,
                 this.sourceVersion,
@@ -96,16 +107,17 @@ public class Transformer implements ITransformer {
 
     @Override
     public Integer execute() {
-        if(!this.rootDir.exists()) return -1;
+        if (!this.rootDir.exists()) return -1;
 
-        if(this.targetLanguage == null && this.targetVersion == null) {
+        if (this.targetLanguage == null && this.targetVersion == null) {
             System.out.println("Nothing has been pending.");
             return 0;
         }
 
-        this.createBackup();
-
-        if(!this.backupCreated) return -1;
+        if (this.shouldBackup) {
+            this.createBackup();
+            if (!this.backupCreated) return -1;
+        }
 
         this.updateManifest();
         int counter = this.updateTakeFiles();
@@ -122,7 +134,7 @@ public class Transformer implements ITransformer {
     }
 
     private void setProjectArchiveDir() {
-        this.projectArchiveDir = new File(Utils.strJoin(new String[] {
+        this.projectArchiveDir = new File(Utils.strJoin(new String[]{
                 this.dateTimeDir.getAbsolutePath(),
                 this.sourceLanguage,
                 this.sourceVersion,
@@ -134,20 +146,17 @@ public class Transformer implements ITransformer {
         this.backupCreated = false;
 
         // Create Archive folder if needed
-        if(!this.archiveDir.exists())
-        {
+        if (!this.archiveDir.exists()) {
             this.archiveDir.mkdir();
         }
 
         // Create DateTime folder
-        if(!this.dateTimeDir.exists())
-        {
+        if (!this.dateTimeDir.exists()) {
             this.dateTimeDir.mkdir();
         }
 
         // Create Project archive folder
-        if(!this.projectArchiveDir.exists())
-        {
+        if (!this.projectArchiveDir.exists()) {
             this.projectArchiveDir.mkdir();
         }
 
@@ -155,13 +164,10 @@ public class Transformer implements ITransformer {
 
         // Copy contents of Root folder to Archive folder
         try {
-            for(File child: project) {
-                if(child.isDirectory())
-                {
+            for (File child : project) {
+                if (child.isDirectory()) {
                     FileUtils.copyDirectoryToDirectory(child, this.projectArchiveDir);
-                }
-                else
-                {
+                } else {
                     FileUtils.copyFileToDirectory(child, this.projectArchiveDir);
                 }
                 this.backupCreated = true;
@@ -176,9 +182,7 @@ public class Transformer implements ITransformer {
             File file = new File(this.projectDir + File.separator + "manifest.json");
             String content = FileUtils.readFileToString(file, "utf-8");
             return new JSONObject(content);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;
         }
@@ -196,17 +200,17 @@ public class Transformer implements ITransformer {
     private void updateManifest() {
         JSONObject projectManifest = this.open_manifest();
 
-        if(projectManifest != null) {
+        if (projectManifest != null) {
             JSONObject language = projectManifest.getJSONObject("language");
             JSONObject version = projectManifest.getJSONObject("version");
             JSONArray chapters = projectManifest.getJSONArray("manifest");
 
-            if(this.targetLanguage != null) {
+            if (this.targetLanguage != null) {
                 language.put("slug", this.targetLanguage);
                 language.put("name", this.targetLanguageName);
                 projectManifest.put("language", language);
             }
-            if(this.targetVersion != null) {
+            if (this.targetVersion != null) {
                 version.put("slug", this.targetVersion);
                 version.put("name", Utils.getVersionName(this.targetVersion));
                 projectManifest.put("version", version);
@@ -233,12 +237,12 @@ public class Transformer implements ITransformer {
                         try {
                             String takeLocation = take.get("location").toString();
                             String[] takeLocationParts = takeLocation.split("/");
-                            String takeLocationName = takeLocationParts[takeLocationParts.length-1];
+                            String takeLocationName = takeLocationParts[takeLocationParts.length - 1];
                             String[] takeLocationNameParts = takeLocationName.split("_");
                             takeLocationNameParts[0] = language.getString("slug");
                             takeLocationNameParts[1] = version.getString("slug");
                             takeLocationName = Utils.strJoin(takeLocationNameParts, "_");
-                            takeLocationParts[takeLocationParts.length-1] = takeLocationName;
+                            takeLocationParts[takeLocationParts.length - 1] = takeLocationName;
                             takeLocation = Utils.strJoin(takeLocationParts, "/");
                             take.put("location", takeLocation);
                         } catch (JSONException e) {
@@ -254,7 +258,7 @@ public class Transformer implements ITransformer {
     private Integer updateTakeFiles() {
         int counter = 0;
         Collection<File> takes = FileUtils.listFiles(this.projectDir, new String[]{"wav"}, true);
-        for (File takeFile: takes) {
+        for (File takeFile : takes) {
             WavFile wf = new WavFile(takeFile);
             WavMetadata wmd = wf.getMetadata();
             String parentDir = takeFile.getParent();
@@ -262,10 +266,10 @@ public class Transformer implements ITransformer {
             this.originalLanguage = wmd.getLanguage();
             this.originalVersion = wmd.getVersion();
 
-            if(this.targetLanguage != null) {
+            if (this.targetLanguage != null) {
                 wmd.setLanguage(this.targetLanguage);
             }
-            if(this.targetVersion != null) {
+            if (this.targetVersion != null) {
                 wmd.setVersion(this.targetVersion);
             }
             wf.commit();
@@ -283,7 +287,7 @@ public class Transformer implements ITransformer {
 
     private void renameFolders() {
         try {
-            File target = new File(Utils.strJoin(new String[] {
+            File target = new File(Utils.strJoin(new String[]{
                     this.rootDir.getAbsolutePath(),
                     (this.targetLanguage != null ? this.targetLanguage : this.originalLanguage),
                     this.targetVersion != null ? this.targetVersion : this.originalVersion,
