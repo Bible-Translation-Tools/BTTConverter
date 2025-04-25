@@ -190,8 +190,9 @@ public class Transformer implements ITransformer {
 
     private void writeManifest(JSONObject manifest) {
         File outFile = new File(this.projectDir + File.separator + "manifest.json");
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
-            manifest.write(bw);
+        try (FileWriter writer = new FileWriter(outFile)) {
+            writer.write(manifest.toString());
+            writer.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

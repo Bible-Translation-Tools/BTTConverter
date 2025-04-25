@@ -4,17 +4,16 @@ import bible.translationtools.recorderapp.filespage.FileNameExtractor;
 import bible.translationtools.recorderapp.wav.WavCue;
 import bible.translationtools.recorderapp.wav.WavFile;
 import bible.translationtools.recorderapp.wav.WavMetadata;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.logging.*;
+import java.util.List;
+import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class FileConverter implements IConverter {
 
-    private final Logger logger = Logger.getLogger(Launcher.class.getName());
+    private final Logger logger = Logger.getLogger(FileConverter.class.getName());
     Scanner reader = new Scanner(System.in);
 
     File srcFile;
